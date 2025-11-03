@@ -70,7 +70,10 @@ workspace_key = subprocess.check_output([
     '-o', 'tsv'
 ]).decode().strip()
 
-customer_id = '5b9c5252-9f87-4414-bdf8-ec380894c24c'
+# Replace with your actual Log Analytics workspace ID
+customer_id = 'YOUR_WORKSPACE_ID'
+# Get your workspace key from Azure Portal
+workspace_key = 'YOUR_WORKSPACE_KEY'
 log_type = 'ComplianceReports'
 
 body = json.dumps(test_data)

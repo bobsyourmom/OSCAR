@@ -158,8 +158,8 @@ SkillGroups:
         Description: Detect failed authentication attempts indicating brute force attacks
         Settings:
           Target: Sentinel
-          TenantId: aaea865e-0278-46e0-9b7e-c0ceb7619a90
-          SubscriptionId: dc227dbb-3963-4b6c-be2b-bf29217436d6
+          TenantId: YOUR_TENANT_ID
+          SubscriptionId: YOUR_SUBSCRIPTION_ID
           ResourceGroupName: sentinel
           WorkspaceName: sentinel
           Template: |-
@@ -221,8 +221,8 @@ SkillGroups:
         Description: Monitor privileged account usage for anomalous activity
         Settings:
           Target: Sentinel
-          TenantId: aaea865e-0278-46e0-9b7e-c0ceb7619a90
-          SubscriptionId: dc227dbb-3963-4b6c-be2b-bf29217436d6
+          TenantId: YOUR_TENANT_ID
+          SubscriptionId: YOUR_SUBSCRIPTION_ID
           ResourceGroupName: sentinel
           WorkspaceName: sentinel
           Template: |-
@@ -276,8 +276,8 @@ SkillGroups:
         Description: Identify users without MFA enabled
         Settings:
           Target: Sentinel
-          TenantId: aaea865e-0278-46e0-9b7e-c0ceb7619a90
-          SubscriptionId: dc227dbb-3963-4b6c-be2b-bf29217436d6
+          TenantId: YOUR_TENANT_ID
+          SubscriptionId: YOUR_SUBSCRIPTION_ID
           ResourceGroupName: sentinel
           WorkspaceName: sentinel
           Template: |-
@@ -331,8 +331,8 @@ SkillGroups:
         Description: Identify inactive accounts that should be disabled
         Settings:
           Target: Sentinel
-          TenantId: aaea865e-0278-46e0-9b7e-c0ceb7619a90
-          SubscriptionId: dc227dbb-3963-4b6c-be2b-bf29217436d6
+          TenantId: YOUR_TENANT_ID
+          SubscriptionId: YOUR_SUBSCRIPTION_ID
           ResourceGroupName: sentinel
           WorkspaceName: sentinel
           Template: |-
@@ -396,8 +396,8 @@ SkillGroups:
         Description: Active high and critical severity security alerts (enriched with Threat Intel Agent)
         Settings:
           Target: Sentinel
-          TenantId: aaea865e-0278-46e0-9b7e-c0ceb7619a90
-          SubscriptionId: dc227dbb-3963-4b6c-be2b-bf29217436d6
+          TenantId: YOUR_TENANT_ID
+          SubscriptionId: YOUR_SUBSCRIPTION_ID
           ResourceGroupName: sentinel
           WorkspaceName: sentinel
           Template: |-
@@ -452,8 +452,8 @@ SkillGroups:
         Description: Malware and malicious code detections
         Settings:
           Target: Sentinel
-          TenantId: aaea865e-0278-46e0-9b7e-c0ceb7619a90
-          SubscriptionId: dc227dbb-3963-4b6c-be2b-bf29217436d6
+          TenantId: YOUR_TENANT_ID
+          SubscriptionId: YOUR_SUBSCRIPTION_ID
           ResourceGroupName: sentinel
           WorkspaceName: sentinel
           Template: |-
@@ -506,8 +506,8 @@ SkillGroups:
         Description: Phishing attempts and malicious email activity (triaged by Phishing Agent)
         Settings:
           Target: Sentinel
-          TenantId: aaea865e-0278-46e0-9b7e-c0ceb7619a90
-          SubscriptionId: dc227dbb-3963-4b6c-be2b-bf29217436d6
+          TenantId: YOUR_TENANT_ID
+          SubscriptionId: YOUR_SUBSCRIPTION_ID
           ResourceGroupName: sentinel
           WorkspaceName: sentinel
           Template: |-
@@ -563,8 +563,8 @@ SkillGroups:
         Description: Potential data exfiltration activity
         Settings:
           Target: Sentinel
-          TenantId: aaea865e-0278-46e0-9b7e-c0ceb7619a90
-          SubscriptionId: dc227dbb-3963-4b6c-be2b-bf29217436d6
+          TenantId: YOUR_TENANT_ID
+          SubscriptionId: YOUR_SUBSCRIPTION_ID
           ResourceGroupName: sentinel
           WorkspaceName: sentinel
           Template: |-
@@ -622,8 +622,8 @@ SkillGroups:
         Description: Map detected techniques to MITRE ATT&CK framework
         Settings:
           Target: Sentinel
-          TenantId: aaea865e-0278-46e0-9b7e-c0ceb7619a90
-          SubscriptionId: dc227dbb-3963-4b6c-be2b-bf29217436d6
+          TenantId: YOUR_TENANT_ID
+          SubscriptionId: YOUR_SUBSCRIPTION_ID
           ResourceGroupName: sentinel
           WorkspaceName: sentinel
           Template: |-
@@ -681,8 +681,8 @@ SkillGroups:
         Description: Track open security incidents requiring response
         Settings:
           Target: Sentinel
-          TenantId: aaea865e-0278-46e0-9b7e-c0ceb7619a90
-          SubscriptionId: dc227dbb-3963-4b6c-be2b-bf29217436d6
+          TenantId: YOUR_TENANT_ID
+          SubscriptionId: YOUR_SUBSCRIPTION_ID
           ResourceGroupName: sentinel
           WorkspaceName: sentinel
           Template: |-
@@ -748,8 +748,8 @@ SkillGroups:
         Description: Monitor administrative activities for unauthorized changes
         Settings:
           Target: Sentinel
-          TenantId: aaea865e-0278-46e0-9b7e-c0ceb7619a90
-          SubscriptionId: dc227dbb-3963-4b6c-be2b-bf29217436d6
+          TenantId: YOUR_TENANT_ID
+          SubscriptionId: YOUR_SUBSCRIPTION_ID
           ResourceGroupName: sentinel
           WorkspaceName: sentinel
           Template: |-
@@ -804,8 +804,8 @@ SkillGroups:
         Description: Track security configuration modifications
         Settings:
           Target: Sentinel
-          TenantId: aaea865e-0278-46e0-9b7e-c0ceb7619a90
-          SubscriptionId: dc227dbb-3963-4b6c-be2b-bf29217436d6
+          TenantId: YOUR_TENANT_ID
+          SubscriptionId: YOUR_SUBSCRIPTION_ID
           ResourceGroupName: sentinel
           WorkspaceName: sentinel
           Template: |-
@@ -859,8 +859,8 @@ SkillGroups:
         Description: Track resource deletion for potential malicious activity
         Settings:
           Target: Sentinel
-          TenantId: aaea865e-0278-46e0-9b7e-c0ceb7619a90
-          SubscriptionId: dc227dbb-3963-4b6c-be2b-bf29217436d6
+          TenantId: YOUR_TENANT_ID
+          SubscriptionId: YOUR_SUBSCRIPTION_ID
           ResourceGroupName: sentinel
           WorkspaceName: sentinel
           Template: |-

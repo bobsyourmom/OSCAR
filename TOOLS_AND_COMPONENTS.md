@@ -49,7 +49,7 @@ Complete list of all tools, services, and components used in the Security Copilo
 **Purpose:** Cloud-native SIEM and SOAR
 **Role:** Data storage and security analytics platform
 **Workspace:** sentinel
-**Workspace ID:** 5b9c5252-9f87-4414-bdf8-ec380894c24c
+**Workspace ID:** YOUR_WORKSPACE_ID
 **Documentation:** https://learn.microsoft.com/azure/sentinel/
 
 **Our Usage:**
@@ -352,7 +352,7 @@ security-reporting-agent/
 **API Version:** 2020-08-01
 **Our Resource:**
 - sentinel (workspace name)
-- ID: 5b9c5252-9f87-4414-bdf8-ec380894c24c
+- ID: YOUR_WORKSPACE_ID
 
 ---
 
@@ -449,7 +449,7 @@ cd test && az deployment group create --resource-group sentinel \
   --template-file logicapp-test-single.json --mode Incremental
 
 # Query Results
-az monitor log-analytics query --workspace 5b9c5252-9f87-4414-bdf8-ec380894c24c \
+az monitor log-analytics query --workspace YOUR_WORKSPACE_ID \
   --analytics-query "ComplianceReports_CL | take 10"
 
 # Test Direct API

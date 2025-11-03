@@ -141,8 +141,8 @@ SkillGroups:
                 IPAddresses = dynamic([]),
                 Applications = dynamic([])
             | project-away placeholder)
-          TenantId: aaea865e-0278-46e0-9b7e-c0ceb7619a90
-          SubscriptionId: dc227dbb-3963-4b6c-be2b-bf29217436d6
+          TenantId: YOUR_TENANT_ID
+          SubscriptionId: YOUR_SUBSCRIPTION_ID
           ResourceGroupName: sentinel
           WorkspaceName: sentinel
       - Name: PrivilegedAccountActivityReport
@@ -211,8 +211,8 @@ SkillGroups:
                 RemediationRequired = "No",
                 Status = "Completed"
             | project-away placeholder)
-          TenantId: aaea865e-0278-46e0-9b7e-c0ceb7619a90
-          SubscriptionId: dc227dbb-3963-4b6c-be2b-bf29217436d6
+          TenantId: YOUR_TENANT_ID
+          SubscriptionId: YOUR_SUBSCRIPTION_ID
           ResourceGroupName: sentinel
           WorkspaceName: sentinel
       - Name: MFAComplianceReport
@@ -276,8 +276,8 @@ SkillGroups:
                 RemediationRequired = "No",
                 Status = "Completed"
             | project-away placeholder)
-          TenantId: aaea865e-0278-46e0-9b7e-c0ceb7619a90
-          SubscriptionId: dc227dbb-3963-4b6c-be2b-bf29217436d6
+          TenantId: YOUR_TENANT_ID
+          SubscriptionId: YOUR_SUBSCRIPTION_ID
           ResourceGroupName: sentinel
           WorkspaceName: sentinel
       - Name: InactiveAccountsReport
@@ -343,8 +343,8 @@ SkillGroups:
                 RemediationRequired = "No",
                 Status = "Completed"
             | project-away placeholder)
-          TenantId: aaea865e-0278-46e0-9b7e-c0ceb7619a90
-          SubscriptionId: dc227dbb-3963-4b6c-be2b-bf29217436d6
+          TenantId: YOUR_TENANT_ID
+          SubscriptionId: YOUR_SUBSCRIPTION_ID
           ResourceGroupName: sentinel
           WorkspaceName: sentinel
       - Name: CriticalAlertsReport
@@ -410,8 +410,8 @@ SkillGroups:
                 RemediationRequired = "No",
                 ThreatIntelEnrichment = "N/A"
             | project-away placeholder)
-          TenantId: aaea865e-0278-46e0-9b7e-c0ceb7619a90
-          SubscriptionId: dc227dbb-3963-4b6c-be2b-bf29217436d6
+          TenantId: YOUR_TENANT_ID
+          SubscriptionId: YOUR_SUBSCRIPTION_ID
           ResourceGroupName: sentinel
           WorkspaceName: sentinel
       - Name: MalwareDetectionsReport
@@ -473,8 +473,8 @@ SkillGroups:
                 FindingType = "No Findings",
                 RemediationRequired = "No"
             | project-away placeholder)
-          TenantId: aaea865e-0278-46e0-9b7e-c0ceb7619a90
-          SubscriptionId: dc227dbb-3963-4b6c-be2b-bf29217436d6
+          TenantId: YOUR_TENANT_ID
+          SubscriptionId: YOUR_SUBSCRIPTION_ID
           ResourceGroupName: sentinel
           WorkspaceName: sentinel
       - Name: PhishingAlertsReport
@@ -541,8 +541,8 @@ SkillGroups:
                 RemediationRequired = "No",
                 PhishingTriageEligible = "N/A"
             | project-away placeholder)
-          TenantId: aaea865e-0278-46e0-9b7e-c0ceb7619a90
-          SubscriptionId: dc227dbb-3963-4b6c-be2b-bf29217436d6
+          TenantId: YOUR_TENANT_ID
+          SubscriptionId: YOUR_SUBSCRIPTION_ID
           ResourceGroupName: sentinel
           WorkspaceName: sentinel
       - Name: DataExfiltrationReport
@@ -607,8 +607,8 @@ SkillGroups:
                 RemediationRequired = "No",
                 ThreatIntelEnrichment = "N/A"
             | project-away placeholder)
-          TenantId: aaea865e-0278-46e0-9b7e-c0ceb7619a90
-          SubscriptionId: dc227dbb-3963-4b6c-be2b-bf29217436d6
+          TenantId: YOUR_TENANT_ID
+          SubscriptionId: YOUR_SUBSCRIPTION_ID
           ResourceGroupName: sentinel
           WorkspaceName: sentinel
       - Name: MITREAttackReport
@@ -675,8 +675,8 @@ SkillGroups:
                 RemediationRequired = "No",
                 Status = "Completed"
             | project-away placeholder)
-          TenantId: aaea865e-0278-46e0-9b7e-c0ceb7619a90
-          SubscriptionId: dc227dbb-3963-4b6c-be2b-bf29217436d6
+          TenantId: YOUR_TENANT_ID
+          SubscriptionId: YOUR_SUBSCRIPTION_ID
           ResourceGroupName: sentinel
           WorkspaceName: sentinel
       - Name: OpenIncidentsReport
@@ -742,8 +742,8 @@ SkillGroups:
                 RemediationRequired = "No",
                 SLA_Breached = "No"
             | project-away placeholder)
-          TenantId: aaea865e-0278-46e0-9b7e-c0ceb7619a90
-          SubscriptionId: dc227dbb-3963-4b6c-be2b-bf29217436d6
+          TenantId: YOUR_TENANT_ID
+          SubscriptionId: YOUR_SUBSCRIPTION_ID
           ResourceGroupName: sentinel
           WorkspaceName: sentinel
       - Name: AdminActivityReport
@@ -807,8 +807,8 @@ SkillGroups:
                 RemediationRequired = "No",
                 Status = "Completed"
             | project-away placeholder)
-          TenantId: aaea865e-0278-46e0-9b7e-c0ceb7619a90
-          SubscriptionId: dc227dbb-3963-4b6c-be2b-bf29217436d6
+          TenantId: YOUR_TENANT_ID
+          SubscriptionId: YOUR_SUBSCRIPTION_ID
           ResourceGroupName: sentinel
           WorkspaceName: sentinel
       - Name: SecurityConfigChangesReport
@@ -875,8 +875,8 @@ SkillGroups:
                 RemediationRequired = "No",
                 Status = "Completed"
             | project-away placeholder)
-          TenantId: aaea865e-0278-46e0-9b7e-c0ceb7619a90
-          SubscriptionId: dc227dbb-3963-4b6c-be2b-bf29217436d6
+          TenantId: YOUR_TENANT_ID
+          SubscriptionId: YOUR_SUBSCRIPTION_ID
           ResourceGroupName: sentinel
           WorkspaceName: sentinel
       - Name: ResourceDeletionReport
@@ -938,8 +938,8 @@ SkillGroups:
                 RemediationRequired = "No",
                 Status = "Completed"
             | project-away placeholder)
-          TenantId: aaea865e-0278-46e0-9b7e-c0ceb7619a90
-          SubscriptionId: dc227dbb-3963-4b6c-be2b-bf29217436d6
+          TenantId: YOUR_TENANT_ID
+          SubscriptionId: YOUR_SUBSCRIPTION_ID
           ResourceGroupName: sentinel
           WorkspaceName: sentinel
 AgentDefinitions:

@@ -196,7 +196,7 @@ python3 test-webhook-data.py
 ## Support
 
 - Production Agent: `CONTEXT/agent-manifest-rebuild.yaml`
-- Workspace: `sentinel` (ID: 5b9c5252-9f87-4414-bdf8-ec380894c24c)
+- Workspace: `sentinel` (ID: YOUR_WORKSPACE_ID)
 - Table: `ComplianceReports_CL`
 - Resource Group: `sentinel`
 

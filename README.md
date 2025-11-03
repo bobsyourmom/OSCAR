@@ -97,6 +97,8 @@ az deployment group create \
   --resource-group sentinel \
   --template-file logicapp-copilot-failedauth.json \
   --parameters logicAppName="ComplianceReports-FailedAuth-Copilot" \
+              workspaceId="YOUR_WORKSPACE_ID" \
+              workspaceName="sentinel" \
   --mode Incremental
 ```
 
@@ -115,9 +117,9 @@ az deployment group create \
 # Manually trigger the Logic App from Azure Portal
 # Wait 5-10 minutes for data ingestion
 
-# Query the results
+# Query the results (replace YOUR_WORKSPACE_ID with your actual workspace ID)
 az monitor log-analytics query \
-  --workspace 5b9c5252-9f87-4414-bdf8-ec380894c24c \
+  --workspace YOUR_WORKSPACE_ID \
   --analytics-query "ComplianceReports_CL | where TimeGenerated > ago(1h) | take 10"
 ```
 
@@ -154,6 +156,8 @@ cd test
 az deployment group create \
   --resource-group sentinel \
   --template-file logicapp-test-single.json \
+  --parameters workspaceId="YOUR_WORKSPACE_ID" \
+              workspaceName="sentinel" \
   --mode Incremental
 ```
 

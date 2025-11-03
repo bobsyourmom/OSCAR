@@ -9,11 +9,23 @@
     "location": {
       "type": "string",
       "defaultValue": "[resourceGroup().location]"
+    },
+    "workspaceName": {
+      "type": "string",
+      "defaultValue": "sentinel",
+      "metadata": {
+        "description": "Name of your Log Analytics workspace"
+      }
+    },
+    "workspaceId": {
+      "type": "string",
+      "metadata": {
+        "description": "Your Log Analytics workspace ID (GUID)"
+      }
     }
   },
   "variables": {
-    "workspaceId": "5b9c5252-9f87-4414-bdf8-ec380894c24c",
-    "workspaceResourceId": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.OperationalInsights/workspaces/sentinel')]",
+    "workspaceResourceId": "[concat('/subscriptions/', subscription().subscriptionId, '/resourceGroups/', resourceGroup().name, '/providers/Microsoft.OperationalInsights/workspaces/', parameters('workspaceName'))]",
     "azureLogAnalyticsConnectionName": "azureloganalyticsdatacollector-test"
   },
   "resources": [
@@ -28,7 +40,7 @@
           "id": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Web/locations/', parameters('location'), '/managedApis/azureloganalyticsdatacollector')]"
         },
         "parameterValues": {
-          "username": "[variables('workspaceId')]",
+          "username": "[parameters('workspaceId')]",
           "password": "[listKeys(variables('workspaceResourceId'), '2020-08-01').primarySharedKey]"
         }
       }

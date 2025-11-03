@@ -18,7 +18,7 @@
 **Logic App:** ComplianceReports-FailedAuth-Copilot  
 **Agent:** Compliance&SecOpsAutomatedReportingAgent  
 **Table:** ComplianceReports_CL  
-**Workspace:** sentinel (5b9c5252-9f87-4414-bdf8-ec380894c24c)  
+**Workspace:** sentinel (YOUR_WORKSPACE_ID)  
 
 ## Quick Commands
 
@@ -28,6 +28,7 @@ cd prod
 az deployment group create \
   --resource-group sentinel \
   --template-file logicapp-copilot-failedauth.json \
+  --parameters logicAppName="ComplianceReports-FailedAuth-Copilot" workspaceId="YOUR_WORKSPACE_ID" workspaceName="sentinel" \
   --parameters logicAppName="ComplianceReports-FailedAuth-Copilot" \
   --mode Incremental
 ```

@@ -1,0 +1,129 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "logicAppName": {
+      "type": "string",
+      "defaultValue": "Test-DummyData"
+    },
+    "workspaceId": {
+      "type": "string",
+      "defaultValue": "5b9c5252-9f87-4414-bdf8-ec380894c24c"
+    },
+    "workspaceKey": {
+      "type": "securestring"
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "[resourceGroup().location]"
+    }
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Logic/workflows",
+      "apiVersion": "2019-05-01",
+      "name": "[parameters('logicAppName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "state": "Enabled",
+        "definition": {
+          "$schema": "https://schema.management.azure.com/providers/Microsoft.Logic/schemas/2016-06-01/workflowdefinition.json#",
+          "contentVersion": "1.0.0.0",
+          "parameters": {
+            "workspaceId": {
+              "defaultValue": "[parameters('workspaceId')]",
+              "type": "String"
+            },
+            "workspaceKey": {
+              "defaultValue": "[parameters('workspaceKey')]",
+              "type": "SecureString"
+            }
+          },
+          "triggers": {
+            "manual": {
+              "type": "Request",
+              "kind": "Http",
+              "inputs": {
+                "schema": {}
+              }
+            }
+          },
+          "actions": {
+            "Initialize_Dummy_Records": {
+              "runAfter": {},
+              "type": "InitializeVariable",
+              "inputs": {
+                "variables": [
+                  {
+                    "name": "DummyRecords",
+                    "type": "array",
+                    "value": [
+                      {
+                        "TimeGenerated": "@{utcNow()}",
+                        "ReportType": "Identity",
+                        "ReportName": "FailedAuthenticationReport",
+                        "ControlID": "AC-7|CIS-5.1",
+                        "Framework": "NIST 800-53|CIS Controls v8",
+                        "QueryDomain": "identity",
+                        "Severity": "High",
+                        "FindingType": "Failed Authentication",
+                        "RemediationRequired": "Yes",
+                        "Status": "New",
+                        "UserPrincipalName": "test.user@example.com",
+                        "Count": 15,
+                        "FirstSeen": "@{addHours(utcNow(), -2)}",
+                        "LastSeen": "@{utcNow()}",
+                        "Description": "Test dummy record to verify data ingestion"
+                      },
+                      {
+                        "TimeGenerated": "@{utcNow()}",
+                        "ReportType": "Identity",
+                        "ReportName": "FailedAuthenticationReport",
+                        "ControlID": "AC-7|CIS-5.1",
+                        "Framework": "NIST 800-53|CIS Controls v8",
+                        "QueryDomain": "identity",
+                        "Severity": "Critical",
+                        "FindingType": "Failed Authentication",
+                        "RemediationRequired": "Yes",
+                        "Status": "New",
+                        "UserPrincipalName": "admin@example.com",
+                        "Count": 25,
+                        "FirstSeen": "@{addHours(utcNow(), -4)}",
+                        "LastSeen": "@{utcNow()}",
+                        "Description": "Test dummy record to verify data ingestion"
+                      }
+                    ]
+                  }
+                ]
+              }
+            },
+            "Send_to_Log_Analytics": {
+              "runAfter": {
+                "Initialize_Dummy_Records": ["Succeeded"]
+              },
+              "type": "Http",
+              "inputs": {
+                "method": "POST",
+                "uri": "https://@{parameters('workspaceId')}.ods.opinsights.azure.com/api/logs?api-version=2016-04-01",
+                "headers": {
+                  "Content-Type": "application/json",
+                  "Log-Type": "ComplianceReports",
+                  "x-ms-date": "@{utcNow('r')}",
+                  "Authorization": "SharedKey @{parameters('workspaceId')}:@{base64(hmac('SHA256', concat('POST\n', string(length(string(variables('DummyRecords')))), '\napplication/json\nx-ms-date:', utcNow('r'), '\n/api/logs'), base64(parameters('workspaceKey'))))}"
+                },
+                "body": "@variables('DummyRecords')"
+              }
+            }
+          },
+          "outputs": {}
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "webhookUrl": {
+      "type": "string",
+      "value": "[listCallbackURL(concat(resourceId('Microsoft.Logic/workflows', parameters('logicAppName')), '/triggers/manual'), '2019-05-01').value]"
+    }
+  }
+}

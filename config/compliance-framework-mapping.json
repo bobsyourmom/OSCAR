@@ -1,0 +1,501 @@
+{
+  "frameworks": {
+    "NIST_CSF_2.0": {
+      "name": "NIST Cybersecurity Framework 2.0",
+      "functions": {
+        "GOVERN": {
+          "categories": ["GV.OC", "GV.RM", "GV.SC", "GV.PO", "GV.OV"],
+          "controls": [
+            {
+              "id": "GV.OC-01",
+              "description": "Organization's cybersecurity governance is established and understood",
+              "queryDomain": "audit",
+              "severity": "high"
+            },
+            {
+              "id": "GV.RM-01",
+              "description": "Risk management processes are established and managed",
+              "queryDomain": "audit",
+              "severity": "high"
+            }
+          ]
+        },
+        "IDENTIFY": {
+          "categories": ["ID.AM", "ID.RA", "ID.IM"],
+          "controls": [
+            {
+              "id": "ID.AM-01",
+              "description": "Physical devices and systems within the organization are inventoried",
+              "queryDomain": "asset",
+              "severity": "medium"
+            },
+            {
+              "id": "ID.AM-02",
+              "description": "Software platforms and applications are inventoried",
+              "queryDomain": "asset",
+              "severity": "medium"
+            },
+            {
+              "id": "ID.AM-06",
+              "description": "Cybersecurity roles and responsibilities are coordinated",
+              "queryDomain": "identity",
+              "severity": "high"
+            }
+          ]
+        },
+        "PROTECT": {
+          "categories": ["PR.AA", "PR.AT", "PR.DS", "PR.PS"],
+          "controls": [
+            {
+              "id": "PR.AA-01",
+              "description": "Identities and credentials are issued, managed, verified, revoked, and audited",
+              "queryDomain": "identity",
+              "severity": "critical"
+            },
+            {
+              "id": "PR.AA-06",
+              "description": "Physical access to assets is managed and protected",
+              "queryDomain": "audit",
+              "severity": "high"
+            },
+            {
+              "id": "PR.DS-01",
+              "description": "Data-at-rest is protected",
+              "queryDomain": "dataProtection",
+              "severity": "critical"
+            },
+            {
+              "id": "PR.DS-02",
+              "description": "Data-in-transit is protected",
+              "queryDomain": "network",
+              "severity": "critical"
+            }
+          ]
+        },
+        "DETECT": {
+          "categories": ["DE.AE", "DE.CM"],
+          "controls": [
+            {
+              "id": "DE.AE-02",
+              "description": "Potentially adverse events are analyzed",
+              "queryDomain": "threat",
+              "severity": "critical"
+            },
+            {
+              "id": "DE.CM-01",
+              "description": "Networks and network services are monitored",
+              "queryDomain": "network",
+              "severity": "high"
+            },
+            {
+              "id": "DE.CM-03",
+              "description": "Personnel activity is monitored",
+              "queryDomain": "audit",
+              "severity": "high"
+            }
+          ]
+        },
+        "RESPOND": {
+          "categories": ["RS.MA", "RS.AN", "RS.MI"],
+          "controls": [
+            {
+              "id": "RS.AN-01",
+              "description": "Investigations incorporate intelligence",
+              "queryDomain": "threat",
+              "severity": "critical"
+            },
+            {
+              "id": "RS.MA-01",
+              "description": "Incident response plan is executed during or after an incident",
+              "queryDomain": "incident",
+              "severity": "critical"
+            }
+          ]
+        },
+        "RECOVER": {
+          "categories": ["RC.RP", "RC.CO"],
+          "controls": [
+            {
+              "id": "RC.RP-01",
+              "description": "Recovery plan is executed during or after a cybersecurity incident",
+              "queryDomain": "incident",
+              "severity": "high"
+            }
+          ]
+        }
+      }
+    },
+    "CIS_Controls_v8": {
+      "name": "CIS Critical Security Controls v8",
+      "controls": [
+        {
+          "id": "CIS-1",
+          "title": "Inventory and Control of Enterprise Assets",
+          "safeguards": [
+            {
+              "id": "CIS-1.1",
+              "description": "Establish and Maintain Detailed Enterprise Asset Inventory",
+              "queryDomain": "asset",
+              "severity": "high",
+              "implementationGroup": "IG1"
+            }
+          ]
+        },
+        {
+          "id": "CIS-2",
+          "title": "Inventory and Control of Software Assets",
+          "safeguards": [
+            {
+              "id": "CIS-2.1",
+              "description": "Establish and Maintain Software Inventory",
+              "queryDomain": "asset",
+              "severity": "high",
+              "implementationGroup": "IG1"
+            }
+          ]
+        },
+        {
+          "id": "CIS-5",
+          "title": "Account Management",
+          "safeguards": [
+            {
+              "id": "CIS-5.1",
+              "description": "Establish and Maintain an Inventory of Accounts",
+              "queryDomain": "identity",
+              "severity": "critical",
+              "implementationGroup": "IG1"
+            },
+            {
+              "id": "CIS-5.2",
+              "description": "Use Unique Passwords",
+              "queryDomain": "identity",
+              "severity": "critical",
+              "implementationGroup": "IG1"
+            },
+            {
+              "id": "CIS-5.3",
+              "description": "Disable Dormant Accounts",
+              "queryDomain": "identity",
+              "severity": "high",
+              "implementationGroup": "IG1"
+            }
+          ]
+        },
+        {
+          "id": "CIS-6",
+          "title": "Access Control Management",
+          "safeguards": [
+            {
+              "id": "CIS-6.1",
+              "description": "Establish an Access Granting Process",
+              "queryDomain": "identity",
+              "severity": "critical",
+              "implementationGroup": "IG1"
+            },
+            {
+              "id": "CIS-6.2",
+              "description": "Establish an Access Revoking Process",
+              "queryDomain": "identity",
+              "severity": "critical",
+              "implementationGroup": "IG1"
+            }
+          ]
+        },
+        {
+          "id": "CIS-8",
+          "title": "Audit Log Management",
+          "safeguards": [
+            {
+              "id": "CIS-8.1",
+              "description": "Establish and Maintain an Audit Log Management Process",
+              "queryDomain": "audit",
+              "severity": "high",
+              "implementationGroup": "IG1"
+            },
+            {
+              "id": "CIS-8.2",
+              "description": "Collect Audit Logs",
+              "queryDomain": "audit",
+              "severity": "high",
+              "implementationGroup": "IG1"
+            },
+            {
+              "id": "CIS-8.11",
+              "description": "Conduct Audit Log Reviews",
+              "queryDomain": "audit",
+              "severity": "high",
+              "implementationGroup": "IG2"
+            }
+          ]
+        },
+        {
+          "id": "CIS-13",
+          "title": "Network Monitoring and Defense",
+          "safeguards": [
+            {
+              "id": "CIS-13.1",
+              "description": "Centralize Security Event Alerting",
+              "queryDomain": "threat",
+              "severity": "critical",
+              "implementationGroup": "IG2"
+            },
+            {
+              "id": "CIS-13.3",
+              "description": "Deploy a Network Intrusion Detection System",
+              "queryDomain": "network",
+              "severity": "high",
+              "implementationGroup": "IG2"
+            }
+          ]
+        },
+        {
+          "id": "CIS-16",
+          "title": "Application Software Security",
+          "safeguards": [
+            {
+              "id": "CIS-16.1",
+              "description": "Establish and Maintain a Secure Application Development Process",
+              "queryDomain": "vulnerability",
+              "severity": "high",
+              "implementationGroup": "IG2"
+            }
+          ]
+        },
+        {
+          "id": "CIS-18",
+          "title": "Penetration Testing",
+          "safeguards": [
+            {
+              "id": "CIS-18.1",
+              "description": "Establish and Maintain a Penetration Testing Program",
+              "queryDomain": "vulnerability",
+              "severity": "medium",
+              "implementationGroup": "IG3"
+            }
+          ]
+        }
+      ]
+    },
+    "NIST_800_53": {
+      "name": "NIST SP 800-53 Rev 5",
+      "families": [
+        {
+          "id": "AC",
+          "name": "Access Control",
+          "controls": [
+            {
+              "id": "AC-2",
+              "title": "Account Management",
+              "description": "Organization manages system accounts",
+              "queryDomain": "identity",
+              "severity": "critical"
+            },
+            {
+              "id": "AC-3",
+              "title": "Access Enforcement",
+              "description": "System enforces approved authorizations",
+              "queryDomain": "identity",
+              "severity": "critical"
+            },
+            {
+              "id": "AC-7",
+              "title": "Unsuccessful Logon Attempts",
+              "description": "System enforces limit of consecutive invalid logon attempts",
+              "queryDomain": "identity",
+              "severity": "high"
+            },
+            {
+              "id": "AC-17",
+              "title": "Remote Access",
+              "description": "Organization monitors and controls remote access",
+              "queryDomain": "network",
+              "severity": "high"
+            }
+          ]
+        },
+        {
+          "id": "AU",
+          "name": "Audit and Accountability",
+          "controls": [
+            {
+              "id": "AU-2",
+              "title": "Event Logging",
+              "description": "System generates audit records",
+              "queryDomain": "audit",
+              "severity": "critical"
+            },
+            {
+              "id": "AU-6",
+              "title": "Audit Record Review, Analysis, and Reporting",
+              "description": "Organization reviews and analyzes system audit records",
+              "queryDomain": "audit",
+              "severity": "high"
+            },
+            {
+              "id": "AU-12",
+              "title": "Audit Record Generation",
+              "description": "System provides audit record generation capability",
+              "queryDomain": "audit",
+              "severity": "critical"
+            }
+          ]
+        },
+        {
+          "id": "CM",
+          "name": "Configuration Management",
+          "controls": [
+            {
+              "id": "CM-8",
+              "title": "System Component Inventory",
+              "description": "Organization develops and documents inventory",
+              "queryDomain": "asset",
+              "severity": "high"
+            }
+          ]
+        },
+        {
+          "id": "IA",
+          "name": "Identification and Authentication",
+          "controls": [
+            {
+              "id": "IA-2",
+              "title": "Identification and Authentication",
+              "description": "System uniquely identifies and authenticates users",
+              "queryDomain": "identity",
+              "severity": "critical"
+            },
+            {
+              "id": "IA-5",
+              "title": "Authenticator Management",
+              "description": "Organization manages system authenticators",
+              "queryDomain": "identity",
+              "severity": "critical"
+            }
+          ]
+        },
+        {
+          "id": "SI",
+          "name": "System and Information Integrity",
+          "controls": [
+            {
+              "id": "SI-2",
+              "title": "Flaw Remediation",
+              "description": "Organization identifies and corrects system flaws",
+              "queryDomain": "vulnerability",
+              "severity": "critical"
+            },
+            {
+              "id": "SI-3",
+              "title": "Malicious Code Protection",
+              "description": "System implements malicious code protection",
+              "queryDomain": "threat",
+              "severity": "critical"
+            },
+            {
+              "id": "SI-4",
+              "title": "System Monitoring",
+              "description": "Organization monitors system to detect attacks",
+              "queryDomain": "threat",
+              "severity": "critical"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "reportGroups": {
+    "daily_critical": {
+      "name": "Daily Critical Security Monitoring",
+      "frequency": "daily",
+      "controls": [
+        "PR.AA-01", "DE.AE-02", "RS.AN-01", "AC-2", "AC-7", "SI-3", "SI-4",
+        "CIS-5.1", "CIS-13.1"
+      ],
+      "description": "Critical security events requiring daily review"
+    },
+    "weekly_compliance": {
+      "name": "Weekly Compliance Review",
+      "frequency": "weekly",
+      "controls": [
+        "ID.AM-01", "ID.AM-02", "CIS-1.1", "CIS-2.1", "CIS-5.3", "CM-8",
+        "AU-6", "CIS-8.11"
+      ],
+      "description": "Compliance and configuration management reviews"
+    },
+    "identity_governance": {
+      "name": "Identity and Access Governance",
+      "frequency": "on-demand",
+      "controls": [
+        "PR.AA-01", "AC-2", "AC-3", "IA-2", "IA-5", "CIS-5.1", "CIS-5.2",
+        "CIS-5.3", "CIS-6.1", "CIS-6.2"
+      ],
+      "description": "Comprehensive identity and access management review"
+    },
+    "threat_detection": {
+      "name": "Threat Detection and Response",
+      "frequency": "on-demand",
+      "controls": [
+        "DE.AE-02", "DE.CM-01", "RS.AN-01", "SI-3", "SI-4", "CIS-13.1", "CIS-13.3"
+      ],
+      "description": "Threat intelligence and detection capabilities"
+    },
+    "audit_logging": {
+      "name": "Audit and Logging Review",
+      "frequency": "on-demand",
+      "controls": [
+        "AU-2", "AU-6", "AU-12", "CIS-8.1", "CIS-8.2", "CIS-8.11", "DE.CM-03"
+      ],
+      "description": "Audit trail and logging compliance"
+    },
+    "vulnerability_management": {
+      "name": "Vulnerability and Patch Management",
+      "frequency": "weekly",
+      "controls": [
+        "SI-2", "CIS-16.1", "CIS-18.1"
+      ],
+      "description": "Vulnerability assessment and remediation tracking"
+    }
+  },
+  "queryDomains": {
+    "identity": {
+      "description": "Identity and Access Management",
+      "tables": ["SigninLogs", "AuditLogs", "AADNonInteractiveUserSignInLogs", "IdentityInfo"],
+      "watchlist": "ComplianceReports_Identity"
+    },
+    "threat": {
+      "description": "Threat Detection and Response",
+      "tables": ["SecurityAlert", "SecurityIncident", "ThreatIntelligenceIndicator"],
+      "watchlist": "ComplianceReports_Threats"
+    },
+    "dataProtection": {
+      "description": "Data Protection and Privacy",
+      "tables": ["AzureDiagnostics", "StorageBlobLogs", "AzureActivity"],
+      "watchlist": "ComplianceReports_DataProtection"
+    },
+    "audit": {
+      "description": "Audit and Compliance Logging",
+      "tables": ["AuditLogs", "AzureActivity", "SecurityEvent"],
+      "watchlist": "ComplianceReports_Audit"
+    },
+    "network": {
+      "description": "Network Security",
+      "tables": ["AzureNetworkAnalytics_CL", "CommonSecurityLog", "AzureFirewallApplicationRule"],
+      "watchlist": "ComplianceReports_Network"
+    },
+    "vulnerability": {
+      "description": "Vulnerability Management",
+      "tables": ["SecurityRecommendation", "SecurityBaseline", "Update"],
+      "watchlist": "ComplianceReports_Vulnerabilities"
+    },
+    "asset": {
+      "description": "Asset Inventory",
+      "tables": ["Heartbeat", "ConfigurationData", "AzureActivity"],
+      "watchlist": "ComplianceReports_Assets"
+    },
+    "incident": {
+      "description": "Incident Response",
+      "tables": ["SecurityIncident", "SecurityAlert"],
+      "watchlist": "ComplianceReports_Incidents"
+    }
+  }
+}

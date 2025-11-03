@@ -1,0 +1,929 @@
+Descriptor:
+  Name: Compliance&SecOpsAutomatedReportingAgent
+  DisplayName: Compliance & SecOps Automated Reporting
+  Description: |
+    Comprehensive security reporting agent that provides automated compliance reporting
+    mapped to NIST CSF 2.0, NIST 800-53, CIS Controls v8, and other frameworks.
+    Integrates with Microsoft Security Copilot agents (Threat Intelligence Briefing,
+    Phishing Triage) for enhanced threat context. All results are written to Sentinel
+    watchlists for visualization in workbooks.
+  Publisher: SecOps Team
+  CatalogScope: UserWorkspace
+  Enabled: true
+  Prerequisites:
+    - Compliance&SecOpsAutomatedReportingAgent
+  Icon: ''
+
+SkillGroups:
+  # ========================================================================
+  # AGENT ENTRYPOINT
+  # ========================================================================
+  - Format: Agent
+    Skills:
+      - Name: ComplianceReportingAgent
+        DisplayName: Compliance & SecOps Reporting Agent
+        Description: Executes compliance and security operations reports across all security domains
+        Settings:
+          Instructions: |
+            You are a compliance and security operations reporting agent. Your role is to execute
+            security reports mapped to compliance frameworks (NIST CSF 2.0, NIST 800-53, CIS Controls v8).
+
+            You have access to the following reporting capabilities:
+            - Identity & Access Management reports (failed authentication, MFA compliance, privileged accounts)
+            - Threat Detection & Response reports (security alerts, malware, phishing, MITRE ATT&CK)
+            - Audit & Logging reports (admin activity, config changes, resource deletions)
+
+            When asked to run reports, execute the appropriate child skills and present findings with:
+            - Control IDs and framework mappings
+            - Severity levels and remediation requirements
+            - Clear summaries for security teams
+        ChildSkills:
+          - ListAllControls
+          - ListControlsByFramework
+          - ListReportGroups
+          - ListControlsByDomain
+          - FailedAuthenticationReport
+          - PrivilegedAccountActivityReport
+          - MFAComplianceReport
+          - InactiveAccountsReport
+          - CriticalAlertsReport
+          - MalwareDetectionsReport
+          - PhishingAlertsReport
+          - DataExfiltrationReport
+          - MITREAttackReport
+          - OpenIncidentsReport
+          - AdminActivityReport
+          - SecurityConfigChangesReport
+          - ResourceDeletionReport
+          - SendResultsToSentinel
+
+  # ========================================================================
+  # CONTROL LISTING AND MANAGEMENT SKILLS
+  # ========================================================================
+  - Format: GPT
+    DisplayName: Control Management
+    Description: List and manage compliance controls and report groups
+    Skills:
+      - Name: ListAllControls
+        DisplayName: List All Compliance Controls
+        Description: Lists all available compliance controls across all frameworks
+        Settings:
+          Template: |
+            List all available compliance controls from the following frameworks:
+            - NIST Cybersecurity Framework 2.0
+            - NIST 800-53 Rev 5
+            - CIS Controls v8
+
+            For each control, provide:
+            - Control ID
+            - Framework
+            - Description
+            - Query Domain (identity, threat, audit, network, etc.)
+            - Severity
+
+            Use the compliance framework mapping configuration to generate this list.
+
+      - Name: ListControlsByFramework
+        DisplayName: List Controls by Framework
+        Description: Lists all controls for a specific compliance framework
+        Settings:
+          Template: |
+            List all compliance controls for the {{framework}} framework.
+
+            Supported frameworks:
+            - NIST_CSF_2.0 (NIST Cybersecurity Framework 2.0)
+            - NIST_800_53 (NIST SP 800-53 Rev 5)
+            - CIS_Controls_v8 (CIS Critical Security Controls v8)
+
+            Provide control IDs, descriptions, query domains, and severities.
+
+      - Name: ListReportGroups
+        DisplayName: List Report Groups
+        Description: Lists all pre-defined report groups and their controls
+        Settings:
+          Template: |
+            List all available report groups including:
+            - daily_critical: Daily Critical Security Monitoring
+            - weekly_compliance: Weekly Compliance Review
+            - identity_governance: Identity and Access Governance
+            - threat_detection: Threat Detection and Response
+            - audit_logging: Audit and Logging Review
+            - vulnerability_management: Vulnerability and Patch Management
+
+            For each group, show:
+            - Name
+            - Frequency
+            - Included control IDs
+            - Description
+
+      - Name: ListControlsByDomain
+        DisplayName: List Controls by Security Domain
+        Description: Lists controls organized by security domain
+        Settings:
+          Template: |
+            List all compliance controls organized by security domain:
+            - Identity & Access Management
+            - Threat Detection & Response
+            - Data Protection
+            - Audit & Logging
+            - Network Security
+            - Vulnerability Management
+            - Asset Management
+            - Incident Response
+
+      - Name: SendResultsToSentinel
+        DisplayName: Send Report Results to Sentinel
+        Description: Sends query results to Sentinel ComplianceReports_CL table via Logic App webhook
+        Inputs:
+          - Name: reportData
+            Description: JSON array of compliance report results from KQL query
+            Required: true
+        Settings:
+          Type: HttpAction
+          Method: POST
+          Url: https://prod-25.northcentralus.logic.azure.com:443/workflows/6f4141e16b6c413d87085b991733528b/triggers/manual/paths/invoke?api-version=2019-05-01&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=1QVZ4btcsy5-Jw4AUC_EXdvNKx_r7JAvNOf4BTquP_I
+          Headers:
+            Content-Type: application/json
+          Body: "{{reportData}}"
+
+  # ========================================================================
+  # IDENTITY & ACCESS MANAGEMENT QUERIES
+  # ========================================================================
+  - Format: KQL
+    DisplayName: Identity & Access Reporting
+    Description: Identity and access management compliance queries
+    Skills:
+      - Name: FailedAuthenticationReport
+        DisplayName: Failed Authentication Attempts Report (AC-7, CIS-5.1)
+        Description: Detect failed authentication attempts indicating brute force attacks
+        Settings:
+          Target: Sentinel
+          TenantId: aaea865e-0278-46e0-9b7e-c0ceb7619a90
+          SubscriptionId: dc227dbb-3963-4b6c-be2b-bf29217436d6
+          ResourceGroupName: sentinel
+          WorkspaceName: sentinel
+          Template: |-
+            let timeRange = 24h;
+            let findings = SigninLogs
+            | where TimeGenerated > ago(timeRange)
+            | where ResultType != 0
+            | summarize
+                FailedAttempts = count(),
+                FirstAttempt = min(TimeGenerated),
+                LastAttempt = max(TimeGenerated),
+                Locations = make_set(Location),
+                IPAddresses = make_set(IPAddress),
+                Applications = make_set(AppDisplayName)
+                by UserPrincipalName, UserDisplayName
+            | where FailedAttempts >= 5
+            | extend
+                Severity = case(FailedAttempts >= 20, "Critical", FailedAttempts >= 10, "High", "Medium"),
+                ControlID = "AC-7|CIS-5.1",
+                Framework = "NIST 800-53|CIS Controls v8",
+                QueryDomain = "identity",
+                ReportType = "Identity",
+                ReportName = "FailedAuthenticationReport",
+                TimeGenerated = now(),
+                FindingType = "Failed Authentication",
+                RemediationRequired = iff(FailedAttempts >= 10, "Yes", "Review"),
+                Status = "New"
+            | project TimeGenerated, ReportType, ReportName, ControlID, Framework, QueryDomain,
+                Severity, FindingType, RemediationRequired, Status, UserPrincipalName, UserDisplayName,
+                FailedAttempts, FirstAttempt, LastAttempt, Locations, IPAddresses, Applications;
+            let hasResults = toscalar(findings | count) > 0;
+            union findings,
+            (print placeholder = 1
+            | where not(hasResults)
+            | extend
+                TimeGenerated = now(),
+                ReportType = "Identity",
+                ReportName = "FailedAuthenticationReport",
+                ControlID = "AC-7|CIS-5.1",
+                Framework = "NIST 800-53|CIS Controls v8",
+                QueryDomain = "identity",
+                Severity = "Informational",
+                FindingType = "No Findings",
+                RemediationRequired = "No",
+                Status = "Completed",
+                UserPrincipalName = "N/A",
+                UserDisplayName = "N/A",
+                FailedAttempts = 0,
+                FirstAttempt = now(),
+                LastAttempt = now(),
+                Locations = dynamic([]),
+                IPAddresses = dynamic([]),
+                Applications = dynamic([])
+            | project-away placeholder)
+        Inputs: []
+
+      - Name: PrivilegedAccountActivityReport
+        DisplayName: Privileged Account Activity Report (AC-2, PR.AA-01)
+        Description: Monitor privileged account usage for anomalous activity
+        Settings:
+          Target: Sentinel
+          TenantId: aaea865e-0278-46e0-9b7e-c0ceb7619a90
+          SubscriptionId: dc227dbb-3963-4b6c-be2b-bf29217436d6
+          ResourceGroupName: sentinel
+          WorkspaceName: sentinel
+          Template: |-
+            let timeRange = 24h;
+            let privilegedRoles = dynamic(["Global Administrator", "Privileged Role Administrator",
+                "Security Administrator", "Application Administrator", "Cloud Application Administrator"]);
+            let findings = AuditLogs
+            | where TimeGenerated > ago(timeRange)
+            | where Category == "RoleManagement" or ActivityDisplayName has_any ("role", "admin")
+            | extend InitiatedByUser = tostring(InitiatedBy.user.userPrincipalName)
+            | extend TargetUser = tostring(TargetResources[0].userPrincipalName)
+            | extend RoleChanged = tostring(TargetResources[0].modifiedProperties[0].newValue)
+            | where RoleChanged has_any (privilegedRoles)
+            | extend
+                Severity = "Critical",
+                ControlID = "AC-2|PR.AA-01|CIS-6.1",
+                Framework = "NIST 800-53|NIST CSF 2.0|CIS Controls v8",
+                QueryDomain = "identity",
+                ReportType = "Identity",
+                ReportName = "PrivilegedAccountActivityReport",
+                FindingType = "Privileged Role Change",
+                RemediationRequired = "Review",
+                Status = "New"
+            | project TimeGenerated, InitiatedByUser, TargetUser, ActivityDisplayName, RoleChanged, Result,
+                Severity, ControlID, Framework, QueryDomain, ReportType, ReportName, FindingType, RemediationRequired, Status;
+            let hasResults = toscalar(findings | count) > 0;
+            union findings,
+            (print placeholder = 1
+            | where not(hasResults)
+            | extend
+                TimeGenerated = now(),
+                InitiatedByUser = "N/A",
+                TargetUser = "N/A",
+                ActivityDisplayName = "N/A",
+                RoleChanged = "N/A",
+                Result = "N/A",
+                Severity = "Informational",
+                ControlID = "AC-2|PR.AA-01|CIS-6.1",
+                Framework = "NIST 800-53|NIST CSF 2.0|CIS Controls v8",
+                QueryDomain = "identity",
+                ReportType = "Identity",
+                ReportName = "PrivilegedAccountActivityReport",
+                FindingType = "No Findings",
+                RemediationRequired = "No",
+                Status = "Completed"
+            | project-away placeholder)
+        Inputs: []
+
+      - Name: MFAComplianceReport
+        DisplayName: MFA Compliance Status Report (IA-2, CIS-6.1)
+        Description: Identify users without MFA enabled
+        Settings:
+          Target: Sentinel
+          TenantId: aaea865e-0278-46e0-9b7e-c0ceb7619a90
+          SubscriptionId: dc227dbb-3963-4b6c-be2b-bf29217436d6
+          ResourceGroupName: sentinel
+          WorkspaceName: sentinel
+          Template: |-
+            let timeRange = 7d;
+            let findings = SigninLogs
+            | where TimeGenerated > ago(timeRange)
+            | summarize SignInCount = count(), MFAUsed = countif(AuthenticationRequirement == "multiFactorAuthentication"),
+                LastSignIn = max(TimeGenerated) by UserPrincipalName, UserDisplayName
+            | extend MFACompliance = iff(MFAUsed == SignInCount, "Compliant", "Non-Compliant")
+            | where MFACompliance == "Non-Compliant"
+            | extend
+                TimeGenerated = now(),
+                MFAComplianceRate = round((todouble(MFAUsed) / SignInCount) * 100, 2),
+                Severity = "Critical",
+                ControlID = "IA-2|CIS-6.1",
+                Framework = "NIST 800-53|CIS Controls v8",
+                QueryDomain = "identity",
+                ReportType = "Identity",
+                ReportName = "MFAComplianceReport",
+                FindingType = "MFA Non-Compliance",
+                RemediationRequired = "Yes",
+                Status = "New"
+            | project TimeGenerated, UserPrincipalName, UserDisplayName, SignInCount, MFAUsed, LastSignIn,
+                MFAComplianceRate, Severity, ControlID, Framework, QueryDomain, ReportType, ReportName, FindingType, RemediationRequired, Status;
+            let hasResults = toscalar(findings | count) > 0;
+            union findings,
+            (print placeholder = 1
+            | where not(hasResults)
+            | extend
+                TimeGenerated = now(),
+                UserPrincipalName = "N/A",
+                UserDisplayName = "N/A",
+                SignInCount = 0,
+                MFAUsed = 0,
+                LastSignIn = now(),
+                MFAComplianceRate = 100.0,
+                Severity = "Informational",
+                ControlID = "IA-2|CIS-6.1",
+                Framework = "NIST 800-53|CIS Controls v8",
+                QueryDomain = "identity",
+                ReportType = "Identity",
+                ReportName = "MFAComplianceReport",
+                FindingType = "No Findings",
+                RemediationRequired = "No",
+                Status = "Completed"
+            | project-away placeholder)
+        Inputs: []
+
+      - Name: InactiveAccountsReport
+        DisplayName: Inactive User Accounts Report (CIS-5.3, AC-2)
+        Description: Identify inactive accounts that should be disabled
+        Settings:
+          Target: Sentinel
+          TenantId: aaea865e-0278-46e0-9b7e-c0ceb7619a90
+          SubscriptionId: dc227dbb-3963-4b6c-be2b-bf29217436d6
+          ResourceGroupName: sentinel
+          WorkspaceName: sentinel
+          Template: |-
+            let inactivityThreshold = 90d;
+            let findings = IdentityInfo
+            | where TimeGenerated > ago(1d)
+            | summarize arg_max(TimeGenerated, *) by AccountUPN
+            | join kind=leftouter (SigninLogs | where TimeGenerated > ago(inactivityThreshold)
+                | summarize LastSignIn = max(TimeGenerated) by UserPrincipalName)
+                on $left.AccountUPN == $right.UserPrincipalName
+            | where isnull(LastSignIn) or LastSignIn < ago(inactivityThreshold)
+            | where AccountEnabled == true
+            | extend
+                TimeGenerated = now(),
+                UserPrincipalName = AccountUPN,
+                DaysSinceLastSignIn = datetime_diff('day', now(), LastSignIn),
+                Severity = "Medium",
+                ControlID = "CIS-5.3|AC-2",
+                Framework = "CIS Controls v8|NIST 800-53",
+                QueryDomain = "identity",
+                ReportType = "Identity",
+                ReportName = "InactiveAccountsReport",
+                FindingType = "Inactive Account",
+                RemediationRequired = "Yes",
+                Status = "New"
+            | project TimeGenerated, UserPrincipalName, AccountDisplayName, LastSignIn, DaysSinceLastSignIn,
+                AccountEnabled, Severity, ControlID, Framework, QueryDomain, ReportType, ReportName, FindingType, RemediationRequired, Status;
+            let hasResults = toscalar(findings | count) > 0;
+            union findings,
+            (print placeholder = 1
+            | where not(hasResults)
+            | extend
+                TimeGenerated = now(),
+                UserPrincipalName = "N/A",
+                AccountDisplayName = "N/A",
+                LastSignIn = now(),
+                DaysSinceLastSignIn = long(0),
+                AccountEnabled = false,
+                Severity = "Informational",
+                ControlID = "CIS-5.3|AC-2",
+                Framework = "CIS Controls v8|NIST 800-53",
+                QueryDomain = "identity",
+                ReportType = "Identity",
+                ReportName = "InactiveAccountsReport",
+                FindingType = "No Findings",
+                RemediationRequired = "No",
+                Status = "Completed"
+            | project-away placeholder)
+        Inputs: []
+
+  # ========================================================================
+  # THREAT DETECTION & RESPONSE QUERIES
+  # Integration with Threat Intelligence Briefing Agent
+  # ========================================================================
+  - Format: KQL
+    DisplayName: Threat Detection & Response Reporting
+    Description: Threat detection queries with agent enrichment
+    Skills:
+      - Name: CriticalAlertsReport
+        DisplayName: High/Critical Security Alerts Report (SI-4, DE.AE-02)
+        Description: Active high and critical severity security alerts (enriched with Threat Intel Agent)
+        Settings:
+          Target: Sentinel
+          TenantId: aaea865e-0278-46e0-9b7e-c0ceb7619a90
+          SubscriptionId: dc227dbb-3963-4b6c-be2b-bf29217436d6
+          ResourceGroupName: sentinel
+          WorkspaceName: sentinel
+          Template: |-
+            let timeRange = 24h;
+            let findings = SecurityAlert
+            | where TimeGenerated > ago(timeRange)
+            | where AlertSeverity in ("High", "Critical")
+            | extend Entities = parse_json(Entities), ExtendedProperties = parse_json(ExtendedProperties)
+            | extend
+                Severity = "Critical",
+                ControlID = "SI-4|DE.AE-02|CIS-13.1",
+                Framework = "NIST 800-53|NIST CSF 2.0|CIS Controls v8",
+                QueryDomain = "threat",
+                ReportType = "Threat",
+                ReportName = "CriticalAlertsReport",
+                FindingType = "Security Alert",
+                RemediationRequired = "Yes",
+                ThreatIntelEnrichment = "Eligible"
+            | project TimeGenerated, AlertName, AlertSeverity, Description, RemediationSteps,
+                CompromisedEntity, Tactics, Techniques, Entities, ProviderName, Status,
+                Severity, ControlID, Framework, QueryDomain, ReportType, ReportName, FindingType, RemediationRequired, ThreatIntelEnrichment;
+            let hasResults = toscalar(findings | count) > 0;
+            union findings,
+            (print placeholder = 1
+            | where not(hasResults)
+            | extend
+                TimeGenerated = now(),
+                AlertName = "N/A",
+                AlertSeverity = "N/A",
+                Description = "No high or critical security alerts detected in the last 24 hours",
+                RemediationSteps = "N/A",
+                CompromisedEntity = "N/A",
+                Tactics = "N/A",
+                Techniques = "N/A",
+                Entities = dynamic([]),
+                ProviderName = "N/A",
+                Status = "Completed",
+                Severity = "Informational",
+                ControlID = "SI-4|DE.AE-02|CIS-13.1",
+                Framework = "NIST 800-53|NIST CSF 2.0|CIS Controls v8",
+                QueryDomain = "threat",
+                ReportType = "Threat",
+                ReportName = "CriticalAlertsReport",
+                FindingType = "No Findings",
+                RemediationRequired = "No",
+                ThreatIntelEnrichment = "N/A"
+            | project-away placeholder)
+        Inputs: []
+
+      - Name: MalwareDetectionsReport
+        DisplayName: Malware Detections Report (SI-3, CIS-13.1)
+        Description: Malware and malicious code detections
+        Settings:
+          Target: Sentinel
+          TenantId: aaea865e-0278-46e0-9b7e-c0ceb7619a90
+          SubscriptionId: dc227dbb-3963-4b6c-be2b-bf29217436d6
+          ResourceGroupName: sentinel
+          WorkspaceName: sentinel
+          Template: |-
+            let timeRange = 24h;
+            let findings = SecurityAlert
+            | where TimeGenerated > ago(timeRange)
+            | where AlertName has_any ("malware", "virus", "trojan", "ransomware", "backdoor")
+            | extend ThreatFamily = tostring(ExtendedProperties.["Threat Family"]),
+                FilePath = tostring(ExtendedProperties.["File Path"]),
+                FileName = tostring(ExtendedProperties.["File Name"])
+            | extend
+                Severity = "Critical",
+                ControlID = "SI-3|CIS-13.1",
+                Framework = "NIST 800-53|CIS Controls v8",
+                QueryDomain = "threat",
+                ReportType = "Threat",
+                ReportName = "MalwareDetectionsReport",
+                FindingType = "Malware Detection",
+                RemediationRequired = "Yes"
+            | project TimeGenerated, AlertName, AlertSeverity, CompromisedEntity, ThreatFamily,
+                FilePath, FileName, RemediationSteps, Status, Severity, ControlID, Framework,
+                QueryDomain, ReportType, ReportName, FindingType, RemediationRequired;
+            let hasResults = toscalar(findings | count) > 0;
+            union findings,
+            (print placeholder = 1
+            | where not(hasResults)
+            | extend
+                TimeGenerated = now(),
+                AlertName = "N/A",
+                AlertSeverity = "N/A",
+                CompromisedEntity = "N/A",
+                ThreatFamily = "N/A",
+                FilePath = "N/A",
+                FileName = "N/A",
+                RemediationSteps = "N/A",
+                Status = "Completed",
+                Severity = "Informational",
+                ControlID = "SI-3|CIS-13.1",
+                Framework = "NIST 800-53|CIS Controls v8",
+                QueryDomain = "threat",
+                ReportType = "Threat",
+                ReportName = "MalwareDetectionsReport",
+                FindingType = "No Findings",
+                RemediationRequired = "No"
+            | project-away placeholder)
+        Inputs: []
+
+      - Name: PhishingAlertsReport
+        DisplayName: Phishing and Email Threats Report (SI-4, DE.AE-02)
+        Description: Phishing attempts and malicious email activity (triaged by Phishing Agent)
+        Settings:
+          Target: Sentinel
+          TenantId: aaea865e-0278-46e0-9b7e-c0ceb7619a90
+          SubscriptionId: dc227dbb-3963-4b6c-be2b-bf29217436d6
+          ResourceGroupName: sentinel
+          WorkspaceName: sentinel
+          Template: |-
+            let timeRange = 24h;
+            let findings = SecurityAlert
+            | where TimeGenerated > ago(timeRange)
+            | where AlertName has_any ("phish", "email", "suspicious link", "malicious attachment")
+            | extend SenderAddress = tostring(ExtendedProperties.["Sender Address"]),
+                RecipientAddress = tostring(ExtendedProperties.["Recipient Address"]),
+                Subject = tostring(ExtendedProperties.["Subject"]),
+                UrlCount = tostring(ExtendedProperties.["Url Count"])
+            | extend
+                Severity = "High",
+                ControlID = "SI-4|DE.AE-02",
+                Framework = "NIST 800-53|NIST CSF 2.0",
+                QueryDomain = "threat",
+                ReportType = "Threat",
+                ReportName = "PhishingAlertsReport",
+                FindingType = "Phishing Attempt",
+                RemediationRequired = "Yes",
+                PhishingTriageEligible = "Yes"
+            | project TimeGenerated, AlertName, AlertSeverity, Description, SenderAddress,
+                RecipientAddress, Subject, UrlCount, Status, Severity, ControlID, Framework,
+                QueryDomain, ReportType, ReportName, FindingType, RemediationRequired, PhishingTriageEligible;
+            let hasResults = toscalar(findings | count) > 0;
+            union findings,
+            (print placeholder = 1
+            | where not(hasResults)
+            | extend
+                TimeGenerated = now(),
+                AlertName = "N/A",
+                AlertSeverity = "N/A",
+                Description = "No phishing attempts detected in the last 24 hours",
+                SenderAddress = "N/A",
+                RecipientAddress = "N/A",
+                Subject = "N/A",
+                UrlCount = "N/A",
+                Status = "Completed",
+                Severity = "Informational",
+                ControlID = "SI-4|DE.AE-02",
+                Framework = "NIST 800-53|NIST CSF 2.0",
+                QueryDomain = "threat",
+                ReportType = "Threat",
+                ReportName = "PhishingAlertsReport",
+                FindingType = "No Findings",
+                RemediationRequired = "No",
+                PhishingTriageEligible = "N/A"
+            | project-away placeholder)
+        Inputs: []
+
+      - Name: DataExfiltrationReport
+        DisplayName: Data Exfiltration Indicators Report (DE.AE-02, RS.AN-01)
+        Description: Potential data exfiltration activity
+        Settings:
+          Target: Sentinel
+          TenantId: aaea865e-0278-46e0-9b7e-c0ceb7619a90
+          SubscriptionId: dc227dbb-3963-4b6c-be2b-bf29217436d6
+          ResourceGroupName: sentinel
+          WorkspaceName: sentinel
+          Template: |-
+            let timeRange = 24h;
+            let findings = SecurityAlert
+            | where TimeGenerated > ago(timeRange)
+            | where AlertName has_any ("exfiltration", "data transfer", "unusual data", "large file", "suspicious upload")
+                or Tactics has "Exfiltration"
+            | extend DataVolume = tostring(ExtendedProperties.["Data Volume"]),
+                Destination = tostring(ExtendedProperties.["Destination"]),
+                Protocol = tostring(ExtendedProperties.["Protocol"])
+            | extend
+                Severity = "Critical",
+                ControlID = "DE.AE-02|RS.AN-01",
+                Framework = "NIST CSF 2.0",
+                QueryDomain = "threat",
+                ReportType = "Threat",
+                ReportName = "DataExfiltrationReport",
+                FindingType = "Data Exfiltration",
+                RemediationRequired = "Yes",
+                ThreatIntelEnrichment = "Eligible"
+            | project TimeGenerated, AlertName, AlertSeverity, CompromisedEntity, Description,
+                DataVolume, Destination, Protocol, Tactics, Techniques, Status, Severity,
+                ControlID, Framework, QueryDomain, ReportType, ReportName, FindingType, RemediationRequired, ThreatIntelEnrichment;
+            let hasResults = toscalar(findings | count) > 0;
+            union findings,
+            (print placeholder = 1
+            | where not(hasResults)
+            | extend
+                TimeGenerated = now(),
+                AlertName = "N/A",
+                AlertSeverity = "N/A",
+                CompromisedEntity = "N/A",
+                Description = "No data exfiltration indicators detected in the last 24 hours",
+                DataVolume = "N/A",
+                Destination = "N/A",
+                Protocol = "N/A",
+                Tactics = "N/A",
+                Techniques = "N/A",
+                Status = "Completed",
+                Severity = "Informational",
+                ControlID = "DE.AE-02|RS.AN-01",
+                Framework = "NIST CSF 2.0",
+                QueryDomain = "threat",
+                ReportType = "Threat",
+                ReportName = "DataExfiltrationReport",
+                FindingType = "No Findings",
+                RemediationRequired = "No",
+                ThreatIntelEnrichment = "N/A"
+            | project-away placeholder)
+        Inputs: []
+
+      - Name: MITREAttackReport
+        DisplayName: MITRE ATT&CK Techniques Report (RS.AN-01, SI-4)
+        Description: Map detected techniques to MITRE ATT&CK framework
+        Settings:
+          Target: Sentinel
+          TenantId: aaea865e-0278-46e0-9b7e-c0ceb7619a90
+          SubscriptionId: dc227dbb-3963-4b6c-be2b-bf29217436d6
+          ResourceGroupName: sentinel
+          WorkspaceName: sentinel
+          Template: |-
+            let timeRange = 24h;
+            let findings = SecurityAlert
+            | where TimeGenerated > ago(timeRange)
+            | where isnotempty(Techniques)
+            | extend TechniquesList = parse_json(Techniques)
+            | mv-expand Technique = TechniquesList
+            | summarize AlertCount = count(), AlertNames = make_set(AlertName),
+                AffectedEntities = make_set(CompromisedEntity), FirstSeen = min(TimeGenerated),
+                LastSeen = max(TimeGenerated), Severities = make_set(AlertSeverity)
+                by tostring(Technique), Tactics
+            | extend
+                TimeGenerated = now(),
+                Severity = case(Severities has "Critical", "Critical", Severities has "High", "High", "Medium"),
+                ControlID = "RS.AN-01|SI-4",
+                Framework = "NIST CSF 2.0|NIST 800-53",
+                QueryDomain = "threat",
+                ReportType = "Threat",
+                ReportName = "MITREAttackReport",
+                FindingType = "MITRE ATT&CK Activity",
+                RemediationRequired = "Review",
+                Status = "New"
+            | project TimeGenerated, Technique, Tactics, AlertCount, FirstSeen, LastSeen,
+                Severities, AffectedEntities, Severity, ControlID, Framework, QueryDomain,
+                ReportType, ReportName, FindingType, RemediationRequired, Status;
+            let hasResults = toscalar(findings | count) > 0;
+            union findings,
+            (print placeholder = 1
+            | where not(hasResults)
+            | extend
+                TimeGenerated = now(),
+                Technique = "N/A",
+                Tactics = "N/A",
+                AlertCount = 0,
+                FirstSeen = now(),
+                LastSeen = now(),
+                Severities = dynamic([]),
+                AffectedEntities = dynamic([]),
+                Severity = "Informational",
+                ControlID = "RS.AN-01|SI-4",
+                Framework = "NIST CSF 2.0|NIST 800-53",
+                QueryDomain = "threat",
+                ReportType = "Threat",
+                ReportName = "MITREAttackReport",
+                FindingType = "No Findings",
+                RemediationRequired = "No",
+                Status = "Completed"
+            | project-away placeholder)
+        Inputs: []
+
+      - Name: OpenIncidentsReport
+        DisplayName: Open Security Incidents Report (RS.MA-01, RS.AN-01)
+        Description: Track open security incidents requiring response
+        Settings:
+          Target: Sentinel
+          TenantId: aaea865e-0278-46e0-9b7e-c0ceb7619a90
+          SubscriptionId: dc227dbb-3963-4b6c-be2b-bf29217436d6
+          ResourceGroupName: sentinel
+          WorkspaceName: sentinel
+          Template: |-
+            let timeRange = 7d;
+            let findings = SecurityIncident
+            | where TimeGenerated > ago(timeRange)
+            | where Status in ("New", "Active")
+            | extend IncidentAge = datetime_diff('hour', now(), CreatedTime),
+                AssignedTo = tostring(Owner.assignedTo)
+            | extend
+                TimeGenerated = now(),
+                Tactics = tostring(AdditionalData.tactics),
+                ControlID = "RS.MA-01|RS.AN-01",
+                Framework = "NIST CSF 2.0",
+                QueryDomain = "threat",
+                ReportType = "Threat",
+                ReportName = "OpenIncidentsReport",
+                FindingType = "Open Incident",
+                RemediationRequired = "Yes",
+                SLA_Breached = iff(IncidentAge > 24, "Yes", "No")
+            | project TimeGenerated, IncidentNumber, Title, Severity, Status, CreatedTime,
+                LastModifiedTime, IncidentAge, AssignedTo, Classification, ClassificationReason,
+                AlertsCount, Tactics, ControlID, Framework, QueryDomain, ReportType, ReportName,
+                FindingType, RemediationRequired, SLA_Breached;
+            let hasResults = toscalar(findings | count) > 0;
+            union findings,
+            (print placeholder = 1
+            | where not(hasResults)
+            | extend
+                TimeGenerated = now(),
+                IncidentNumber = "N/A",
+                Title = "N/A",
+                Severity = "Informational",
+                Status = "Completed",
+                CreatedTime = now(),
+                LastModifiedTime = now(),
+                IncidentAge = long(0),
+                AssignedTo = "N/A",
+                Classification = "N/A",
+                ClassificationReason = "N/A",
+                AlertsCount = 0,
+                Tactics = "N/A",
+                ControlID = "RS.MA-01|RS.AN-01",
+                Framework = "NIST CSF 2.0",
+                QueryDomain = "threat",
+                ReportType = "Threat",
+                ReportName = "OpenIncidentsReport",
+                FindingType = "No Findings",
+                RemediationRequired = "No",
+                SLA_Breached = "No"
+            | project-away placeholder)
+        Inputs: []
+
+  # ========================================================================
+  # AUDIT & LOGGING QUERIES
+  # ========================================================================
+  - Format: KQL
+    DisplayName: Audit & Logging Reporting
+    Description: Audit trail and logging compliance queries
+    Skills:
+      - Name: AdminActivityReport
+        DisplayName: Administrative Activity Report (AU-6, DE.CM-03)
+        Description: Monitor administrative activities for unauthorized changes
+        Settings:
+          Target: Sentinel
+          TenantId: aaea865e-0278-46e0-9b7e-c0ceb7619a90
+          SubscriptionId: dc227dbb-3963-4b6c-be2b-bf29217436d6
+          ResourceGroupName: sentinel
+          WorkspaceName: sentinel
+          Template: |-
+            let timeRange = 24h;
+            let findings = AzureActivity
+            | where TimeGenerated > ago(timeRange)
+            | where OperationNameValue has_any ("Microsoft.Authorization", "Microsoft.Compute",
+                "Microsoft.Network", "Microsoft.Storage")
+            | where ActivityStatusValue == "Success"
+            | extend InitiatedBy = tostring(Caller)
+            | extend
+                Severity = case(OperationNameValue has_any ("delete", "remove"), "Critical",
+                    OperationNameValue has_any ("write", "create"), "High", "Medium"),
+                ControlID = "AU-6|DE.CM-03|CIS-8.11",
+                Framework = "NIST 800-53|NIST CSF 2.0|CIS Controls v8",
+                QueryDomain = "audit",
+                ReportType = "Audit",
+                ReportName = "AdminActivityReport",
+                FindingType = "Administrative Activity",
+                RemediationRequired = "Review",
+                Status = "New"
+            | project TimeGenerated, OperationNameValue, ResourceProviderValue, ResourceGroup,
+                SubscriptionId, InitiatedBy, ActivityStatusValue, Properties = parse_json(Properties),
+                Severity, ControlID, Framework, QueryDomain, ReportType, ReportName, FindingType, RemediationRequired, Status;
+            let hasResults = toscalar(findings | count) > 0;
+            union findings,
+            (print placeholder = 1
+            | where not(hasResults)
+            | extend
+                TimeGenerated = now(),
+                OperationNameValue = "N/A",
+                ResourceProviderValue = "N/A",
+                ResourceGroup = "N/A",
+                SubscriptionId = "N/A",
+                InitiatedBy = "N/A",
+                ActivityStatusValue = "N/A",
+                Properties = dynamic({}),
+                Severity = "Informational",
+                ControlID = "AU-6|DE.CM-03|CIS-8.11",
+                Framework = "NIST 800-53|NIST CSF 2.0|CIS Controls v8",
+                QueryDomain = "audit",
+                ReportType = "Audit",
+                ReportName = "AdminActivityReport",
+                FindingType = "No Findings",
+                RemediationRequired = "No",
+                Status = "Completed"
+            | project-away placeholder)
+        Inputs: []
+
+      - Name: SecurityConfigChangesReport
+        DisplayName: Security Configuration Changes Report (AU-2, CIS-8.2)
+        Description: Track security configuration modifications
+        Settings:
+          Target: Sentinel
+          TenantId: aaea865e-0278-46e0-9b7e-c0ceb7619a90
+          SubscriptionId: dc227dbb-3963-4b6c-be2b-bf29217436d6
+          ResourceGroupName: sentinel
+          WorkspaceName: sentinel
+          Template: |-
+            let timeRange = 24h;
+            let findings = AuditLogs
+            | where TimeGenerated > ago(timeRange)
+            | where Category in ("Policy", "ApplicationManagement", "DirectoryManagement")
+            | extend InitiatedByUser = tostring(InitiatedBy.user.userPrincipalName)
+            | extend TargetResource = tostring(TargetResources[0].displayName)
+            | extend ModifiedProperties = parse_json(TargetResources[0].modifiedProperties)
+            | extend
+                Severity = "Critical",
+                ControlID = "AU-2|CIS-8.2",
+                Framework = "NIST 800-53|CIS Controls v8",
+                QueryDomain = "audit",
+                ReportType = "Audit",
+                ReportName = "SecurityConfigChangesReport",
+                FindingType = "Configuration Change",
+                RemediationRequired = "Review",
+                Status = "New"
+            | project TimeGenerated, ActivityDisplayName, Category, InitiatedByUser, TargetResource,
+                ModifiedProperties, Result, OperationType, Severity, ControlID, Framework,
+                QueryDomain, ReportType, ReportName, FindingType, RemediationRequired, Status;
+            let hasResults = toscalar(findings | count) > 0;
+            union findings,
+            (print placeholder = 1
+            | where not(hasResults)
+            | extend
+                TimeGenerated = now(),
+                ActivityDisplayName = "N/A",
+                Category = "N/A",
+                InitiatedByUser = "N/A",
+                TargetResource = "N/A",
+                ModifiedProperties = dynamic({}),
+                Result = "N/A",
+                OperationType = "N/A",
+                Severity = "Informational",
+                ControlID = "AU-2|CIS-8.2",
+                Framework = "NIST 800-53|CIS Controls v8",
+                QueryDomain = "audit",
+                ReportType = "Audit",
+                ReportName = "SecurityConfigChangesReport",
+                FindingType = "No Findings",
+                RemediationRequired = "No",
+                Status = "Completed"
+            | project-away placeholder)
+        Inputs: []
+
+      - Name: ResourceDeletionReport
+        DisplayName: Resource Deletion Activities Report (AU-12, AU-6)
+        Description: Track resource deletion for potential malicious activity
+        Settings:
+          Target: Sentinel
+          TenantId: aaea865e-0278-46e0-9b7e-c0ceb7619a90
+          SubscriptionId: dc227dbb-3963-4b6c-be2b-bf29217436d6
+          ResourceGroupName: sentinel
+          WorkspaceName: sentinel
+          Template: |-
+            let timeRange = 24h;
+            let findings = AzureActivity
+            | where TimeGenerated > ago(timeRange)
+            | where OperationNameValue endswith "delete" or OperationNameValue has "Delete"
+            | where ActivityStatusValue == "Success"
+            | extend
+                Severity = "Critical",
+                ControlID = "AU-12|AU-6",
+                Framework = "NIST 800-53",
+                QueryDomain = "audit",
+                ReportType = "Audit",
+                ReportName = "ResourceDeletionReport",
+                FindingType = "Resource Deletion",
+                RemediationRequired = "Review",
+                Status = "New"
+            | project TimeGenerated, OperationNameValue, ResourceProviderValue, ResourceId,
+                ResourceGroup, SubscriptionId, Caller, CallerIpAddress, Properties = parse_json(Properties),
+                Severity, ControlID, Framework, QueryDomain, ReportType, ReportName, FindingType, RemediationRequired, Status;
+            let hasResults = toscalar(findings | count) > 0;
+            union findings,
+            (print placeholder = 1
+            | where not(hasResults)
+            | extend
+                TimeGenerated = now(),
+                OperationNameValue = "N/A",
+                ResourceProviderValue = "N/A",
+                ResourceId = "N/A",
+                ResourceGroup = "N/A",
+                SubscriptionId = "N/A",
+                Caller = "N/A",
+                CallerIpAddress = "N/A",
+                Properties = dynamic({}),
+                Severity = "Informational",
+                ControlID = "AU-12|AU-6",
+                Framework = "NIST 800-53",
+                QueryDomain = "audit",
+                ReportType = "Audit",
+                ReportName = "ResourceDeletionReport",
+                FindingType = "No Findings",
+                RemediationRequired = "No",
+                Status = "Completed"
+            | project-away placeholder)
+        Inputs: []
+
+AgentDefinitions:
+  - Name: ComplianceSecOpsReportingAgent
+    DisplayName: Compliance & SecOps Automated Reporting Agent
+    Description: |
+      This agent automates security reporting for compliance and security operations teams.
+      It executes KQL queries mapped to specific compliance controls (NIST CSF 2.0, NIST 800-53,
+      CIS Controls v8), enriches findings with threat intelligence, and provides comprehensive
+      reporting across Identity, Threats, Audit, and Network security domains.
+    Publisher: SecOps Team
+    Product: Security Reporting
+    AgentSingleInstanceConstraint: Tenant
+    PreviewState: Private
+    PublisherSource: Custom
+    RequiredSkillsets:
+      - ComplianceReportingAgent
+    Triggers:
+      - Name: DailyComplianceReports
+        DefaultPollPeriodSeconds: 86400
+        ProcessSkill: Compliance&SecOpsAutomatedReportingAgent.ComplianceReportingAgent

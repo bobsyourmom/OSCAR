@@ -1,0 +1,290 @@
+// ============================================================================
+// AUDIT AND LOGGING QUERIES
+// Compliance Controls: AU-2, AU-6, AU-12, CIS-8.x, DE.CM-03
+// ============================================================================
+
+// Query 1: Administrative Activity Monitoring (AU-6, DE.CM-03, CIS-8.11)
+// Control: NIST 800-53 AU-6, NIST CSF DE.CM-03, CIS-8.11
+// Severity: High
+// Description: Monitor administrative activities for unauthorized changes
+AzureActivity
+| where TimeGenerated > ago(24h)
+| where OperationNameValue has_any ("Microsoft.Authorization", "Microsoft.Compute", "Microsoft.Network", "Microsoft.Storage")
+| where ActivityStatusValue == "Success"
+| extend InitiatedBy = tostring(Caller)
+| project
+    TimeGenerated,
+    OperationNameValue,
+    ResourceProviderValue,
+    ResourceGroup,
+    SubscriptionId,
+    InitiatedBy,
+    ActivityStatusValue,
+    Properties = parse_json(Properties),
+    Severity = case(
+        OperationNameValue has_any ("delete", "remove"), "Critical",
+        OperationNameValue has_any ("write", "create"), "High",
+        "Medium"
+    ),
+    ControlID = "AU-6|DE.CM-03|CIS-8.11",
+    Framework = "NIST 800-53|NIST CSF 2.0|CIS Controls v8",
+    QueryDomain = "audit",
+    FindingType = "Administrative Activity",
+    RemediationRequired = "Review"
+
+// Query 2: Security Configuration Changes (AU-2, CIS-8.2)
+// Control: NIST 800-53 AU-2, CIS-8.2
+// Severity: Critical
+// Description: Track security configuration modifications
+AuditLogs
+| where TimeGenerated > ago(24h)
+| where Category in ("Policy", "ApplicationManagement", "DirectoryManagement")
+| extend InitiatedByUser = tostring(InitiatedBy.user.userPrincipalName)
+| extend TargetResource = tostring(TargetResources[0].displayName)
+| extend ModifiedProperties = parse_json(TargetResources[0].modifiedProperties)
+| project
+    TimeGenerated,
+    ActivityDisplayName,
+    Category,
+    InitiatedByUser,
+    TargetResource,
+    ModifiedProperties,
+    Result,
+    OperationType,
+    Severity = "Critical",
+    ControlID = "AU-2|CIS-8.2",
+    Framework = "NIST 800-53|CIS Controls v8",
+    QueryDomain = "audit",
+    FindingType = "Configuration Change",
+    RemediationRequired = "Review"
+
+// Query 3: Failed Administrative Actions (AU-6, CIS-8.11)
+// Control: NIST 800-53 AU-6, CIS-8.11
+// Severity: High
+// Description: Monitor failed administrative attempts
+AzureActivity
+| where TimeGenerated > ago(24h)
+| where ActivityStatusValue in ("Failure", "Failed")
+| where OperationNameValue has_any ("Microsoft.Authorization", "Microsoft.Compute", "Microsoft.Network")
+| summarize
+    FailureCount = count(),
+    Operations = make_set(OperationNameValue),
+    Resources = make_set(Resource),
+    FirstFailure = min(TimeGenerated),
+    LastFailure = max(TimeGenerated)
+    by Caller, CallerIpAddress
+| where FailureCount >= 3
+| project
+    TimeGenerated = now(),
+    Caller,
+    CallerIpAddress,
+    FailureCount,
+    Operations,
+    Resources,
+    FirstFailure,
+    LastFailure,
+    Severity = "High",
+    ControlID = "AU-6|CIS-8.11",
+    Framework = "NIST 800-53|CIS Controls v8",
+    QueryDomain = "audit",
+    FindingType = "Failed Admin Actions",
+    RemediationRequired = "Yes"
+
+// Query 4: Resource Deletion Activities (AU-12, AU-6)
+// Control: NIST 800-53 AU-12, AU-6
+// Severity: Critical
+// Description: Track resource deletion for potential malicious activity
+AzureActivity
+| where TimeGenerated > ago(24h)
+| where OperationNameValue endswith "delete" or OperationNameValue has "Delete"
+| where ActivityStatusValue == "Success"
+| project
+    TimeGenerated,
+    OperationNameValue,
+    ResourceProviderValue,
+    ResourceId,
+    ResourceGroup,
+    SubscriptionId,
+    Caller,
+    CallerIpAddress,
+    Properties = parse_json(Properties),
+    Severity = "Critical",
+    ControlID = "AU-12|AU-6",
+    Framework = "NIST 800-53",
+    QueryDomain = "audit",
+    FindingType = "Resource Deletion",
+    RemediationRequired = "Review"
+
+// Query 5: Audit Log Collection Status (CIS-8.1, AU-2)
+// Control: CIS-8.1, NIST 800-53 AU-2
+// Severity: High
+// Description: Verify audit logs are being collected
+let expectedTables = dynamic(["AuditLogs", "SigninLogs", "AzureActivity", "SecurityEvent"]);
+union
+    (AuditLogs | where TimeGenerated > ago(1h) | summarize LastLog = max(TimeGenerated), RecordCount = count() | extend TableName = "AuditLogs"),
+    (SigninLogs | where TimeGenerated > ago(1h) | summarize LastLog = max(TimeGenerated), RecordCount = count() | extend TableName = "SigninLogs"),
+    (AzureActivity | where TimeGenerated > ago(1h) | summarize LastLog = max(TimeGenerated), RecordCount = count() | extend TableName = "AzureActivity"),
+    (SecurityEvent | where TimeGenerated > ago(1h) | summarize LastLog = max(TimeGenerated), RecordCount = count() | extend TableName = "SecurityEvent")
+| extend
+    MinutesSinceLastLog = datetime_diff('minute', now(), LastLog),
+    CollectionStatus = case(
+        MinutesSinceLastLog > 60, "Critical - No Data",
+        MinutesSinceLastLog > 30, "Warning - Delayed",
+        "Healthy"
+    )
+| project
+    TimeGenerated = now(),
+    TableName,
+    LastLog,
+    MinutesSinceLastLog,
+    RecordCount,
+    CollectionStatus,
+    Severity = case(
+        CollectionStatus has "Critical", "Critical",
+        CollectionStatus has "Warning", "High",
+        "Medium"
+    ),
+    ControlID = "CIS-8.1|AU-2",
+    Framework = "CIS Controls v8|NIST 800-53",
+    QueryDomain = "audit",
+    FindingType = "Log Collection Status",
+    RemediationRequired = iff(CollectionStatus != "Healthy", "Yes", "No")
+
+// Query 6: Privileged Activity Outside Business Hours (AU-6, DE.CM-03)
+// Control: NIST 800-53 AU-6, NIST CSF DE.CM-03
+// Severity: High
+// Description: Detect administrative activity during off-hours
+let businessHoursStart = 8;
+let businessHoursEnd = 18;
+AuditLogs
+| where TimeGenerated > ago(24h)
+| extend Hour = hourofday(TimeGenerated)
+| where Hour < businessHoursStart or Hour >= businessHoursEnd
+| where Category in ("RoleManagement", "ApplicationManagement", "Policy")
+| extend InitiatedByUser = tostring(InitiatedBy.user.userPrincipalName)
+| project
+    TimeGenerated,
+    Hour,
+    ActivityDisplayName,
+    Category,
+    InitiatedByUser,
+    Result,
+    OperationType,
+    Severity = "High",
+    ControlID = "AU-6|DE.CM-03",
+    Framework = "NIST 800-53|NIST CSF 2.0",
+    QueryDomain = "audit",
+    FindingType = "Off-Hours Admin Activity",
+    RemediationRequired = "Review"
+
+// Query 7: Audit Log Tampering Detection (AU-9)
+// Control: NIST 800-53 AU-9
+// Severity: Critical
+// Description: Detect attempts to modify or delete audit logs
+AzureActivity
+| where TimeGenerated > ago(24h)
+| where OperationNameValue has_any ("Microsoft.Insights/diagnosticSettings", "Microsoft.OperationalInsights/workspaces")
+| where OperationNameValue has_any ("delete", "write")
+| project
+    TimeGenerated,
+    OperationNameValue,
+    Caller,
+    CallerIpAddress,
+    ResourceId,
+    ActivityStatusValue,
+    Properties = parse_json(Properties),
+    Severity = "Critical",
+    ControlID = "AU-9",
+    Framework = "NIST 800-53",
+    QueryDomain = "audit",
+    FindingType = "Audit Configuration Change",
+    RemediationRequired = "Yes"
+
+// Query 8: Key Vault Access Audit (AU-12, PR.DS-01)
+// Control: NIST 800-53 AU-12, NIST CSF PR.DS-01
+// Severity: High
+// Description: Monitor Key Vault access for sensitive data protection
+AzureDiagnostics
+| where TimeGenerated > ago(24h)
+| where ResourceType == "VAULTS"
+| where OperationName has_any ("SecretGet", "SecretList", "KeyGet", "CertificateGet")
+| project
+    TimeGenerated,
+    OperationName,
+    CallerIPAddress,
+    identity_claim_upn_s,
+    ResourceId,
+    ResultSignature,
+    Severity = case(
+        ResultSignature != "OK", "Critical",
+        OperationName has "List", "High",
+        "Medium"
+    ),
+    ControlID = "AU-12|PR.DS-01",
+    Framework = "NIST 800-53|NIST CSF 2.0",
+    QueryDomain = "audit",
+    FindingType = "Key Vault Access",
+    RemediationRequired = "Review"
+
+// Query 9: Policy Assignment Changes (AU-2, CIS-8.2)
+// Control: NIST 800-53 AU-2, CIS-8.2
+// Severity: High
+// Description: Track Azure Policy and compliance policy changes
+AzureActivity
+| where TimeGenerated > ago(24h)
+| where OperationNameValue has "Microsoft.Authorization/policyAssignments"
+| where ActivityStatusValue == "Success"
+| extend PolicyDetails = parse_json(Properties)
+| project
+    TimeGenerated,
+    OperationNameValue,
+    Caller,
+    CallerIpAddress,
+    ResourceGroup,
+    SubscriptionId,
+    PolicyDetails,
+    ActivityStatusValue,
+    Severity = "High",
+    ControlID = "AU-2|CIS-8.2",
+    Framework = "NIST 800-53|CIS Controls v8",
+    QueryDomain = "audit",
+    FindingType = "Policy Change",
+    RemediationRequired = "Review"
+
+// Query 10: Compliance Audit Trail Summary (AU-6, CIS-8.11)
+// Control: NIST 800-53 AU-6, CIS-8.11
+// Severity: Medium
+// Description: Daily audit activity summary for compliance reporting
+union AuditLogs, AzureActivity
+| where TimeGenerated > ago(24h)
+| summarize
+    TotalEvents = count(),
+    SuccessfulEvents = countif(Result == "success" or ActivityStatusValue == "Success"),
+    FailedEvents = countif(Result == "failure" or ActivityStatusValue in ("Failure", "Failed")),
+    UniqueUsers = dcount(coalesce(tostring(InitiatedBy.user.userPrincipalName), Caller)),
+    UniqueOperations = dcount(coalesce(OperationName, OperationNameValue)),
+    CriticalOperations = countif(OperationNameValue has_any ("delete", "remove") or Category == "RoleManagement")
+    by bin(TimeGenerated, 1h)
+| extend
+    FailureRate = round((todouble(FailedEvents) / TotalEvents) * 100, 2),
+    RiskScore = (FailedEvents * 2) + (CriticalOperations * 5)
+| project
+    TimeGenerated,
+    TotalEvents,
+    SuccessfulEvents,
+    FailedEvents,
+    FailureRate,
+    UniqueUsers,
+    UniqueOperations,
+    CriticalOperations,
+    RiskScore,
+    Severity = case(
+        RiskScore >= 50, "High",
+        RiskScore >= 20, "Medium",
+        "Low"
+    ),
+    ControlID = "AU-6|CIS-8.11",
+    Framework = "NIST 800-53|CIS Controls v8",
+    QueryDomain = "audit",
+    FindingType = "Audit Summary",
+    RemediationRequired = "Review"

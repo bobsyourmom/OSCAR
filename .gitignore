@@ -1,0 +1,41 @@
+# Azure credentials and secrets
+*.env
+*.pem
+*.pfx
+*.key
+credentials.json
+
+# Workspace IDs and keys (use parameters instead)
+workspace-secrets.txt
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+desktop.ini
+
+# Office temporary files
+~$*.docx
+~$*.xlsx
+~$*.pptx
+
+# Logs
+*.log
+
+# Test outputs
+test-output/
+*.tmp

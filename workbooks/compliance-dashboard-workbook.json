@@ -1,0 +1,472 @@
+{
+  "version": "Notebook/1.0",
+  "items": [
+    {
+      "type": 1,
+      "content": {
+        "json": "# Security Compliance & Operations Dashboard\n---\n\nThis dashboard provides comprehensive visibility into security compliance posture across multiple frameworks including NIST CSF 2.0, NIST 800-53, and CIS Controls v8. Data is automatically populated by the Security Copilot Compliance Reporting Agent and enriched with threat intelligence.\n\n**Last Updated**: {TimeGenerated:max}\n\n### Quick Navigation\n- [Executive Summary](#executive-summary)\n- [Compliance Controls](#compliance-controls)\n- [Threat Intelligence](#threat-intelligence)\n- [Identity & Access](#identity-access)\n- [Incident Response](#incident-response)"
+      },
+      "name": "header-text"
+    },
+    {
+      "type": 9,
+      "content": {
+        "version": "KqlParameterItem/1.0",
+        "parameters": [
+          {
+            "id": "time-range-param",
+            "version": "KqlParameterItem/1.0",
+            "name": "TimeRange",
+            "type": 4,
+            "isRequired": true,
+            "value": {
+              "durationMs": 604800000
+            },
+            "typeSettings": {
+              "selectableValues": [
+                {
+                  "durationMs": 86400000,
+                  "displayName": "Last 24 hours"
+                },
+                {
+                  "durationMs": 604800000,
+                  "displayName": "Last 7 days"
+                },
+                {
+                  "durationMs": 2592000000,
+                  "displayName": "Last 30 days"
+                },
+                {
+                  "durationMs": 7776000000,
+                  "displayName": "Last 90 days"
+                }
+              ]
+            }
+          },
+          {
+            "id": "framework-param",
+            "version": "KqlParameterItem/1.0",
+            "name": "Framework",
+            "type": 2,
+            "isRequired": false,
+            "multiSelect": true,
+            "quote": "'",
+            "delimiter": ",",
+            "query": "_GetWatchlist('ComplianceReports_Threats') | distinct Framework | order by Framework asc",
+            "value": [
+              "value::all"
+            ],
+            "typeSettings": {
+              "additionalResourceOptions": [
+                "value::all"
+              ]
+            },
+            "queryType": 0,
+            "resourceType": "microsoft.operationalinsights/workspaces"
+          },
+          {
+            "id": "severity-param",
+            "version": "KqlParameterItem/1.0",
+            "name": "Severity",
+            "type": 2,
+            "isRequired": false,
+            "multiSelect": true,
+            "quote": "'",
+            "delimiter": ",",
+            "typeSettings": {
+              "additionalResourceOptions": [
+                "value::all"
+              ]
+            },
+            "jsonData": "[\"Critical\", \"High\", \"Medium\", \"Low\"]",
+            "value": [
+              "value::all"
+            ]
+          }
+        ],
+        "style": "pills",
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces"
+      },
+      "name": "parameters"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "## Executive Summary\n---"
+      },
+      "name": "executive-summary-header"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "union\n    (_GetWatchlist('ComplianceReports_Identity') | extend Domain = 'Identity'),\n    (_GetWatchlist('ComplianceReports_Threats') | extend Domain = 'Threats'),\n    (_GetWatchlist('ComplianceReports_Audit') | extend Domain = 'Audit'),\n    (_GetWatchlist('ComplianceReports_Network') | extend Domain = 'Network'),\n    (_GetWatchlist('ComplianceReports_Vulnerabilities') | extend Domain = 'Vulnerabilities'),\n    (_GetWatchlist('ComplianceReports_DataProtection') | extend Domain = 'Data Protection')\n| where TimeGenerated {TimeRange}\n| where Framework has_any ({Framework}) or '*' in ({Framework})\n| where Severity in ({Severity}) or '*' in ({Severity})\n| summarize\n    TotalFindings = count(),\n    CriticalFindings = countif(Severity == 'Critical'),\n    HighFindings = countif(Severity == 'High'),\n    MediumFindings = countif(Severity == 'Medium'),\n    RequireRemediation = countif(RemediationRequired == 'Yes')\n| extend\n    ComplianceScore = round(100 - ((todouble(CriticalFindings) * 10 + todouble(HighFindings) * 5 + todouble(MediumFindings) * 2) / todouble(TotalFindings)), 2),\n    RiskScore = (CriticalFindings * 10) + (HighFindings * 5) + (MediumFindings * 2)",
+        "size": 4,
+        "title": "Overall Compliance Metrics",
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "visualization": "tiles",
+        "tileSettings": {
+          "titleContent": {
+            "columnMatch": "Column",
+            "formatter": 1
+          },
+          "leftContent": {
+            "columnMatch": "Value",
+            "formatter": 12,
+            "formatOptions": {
+              "palette": "auto"
+            }
+          },
+          "showBorder": true
+        }
+      },
+      "customWidth": "50",
+      "name": "overall-metrics-tiles"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "union\n    (_GetWatchlist('ComplianceReports_Identity') | extend Domain = 'Identity'),\n    (_GetWatchlist('ComplianceReports_Threats') | extend Domain = 'Threats'),\n    (_GetWatchlist('ComplianceReports_Audit') | extend Domain = 'Audit'),\n    (_GetWatchlist('ComplianceReports_Network') | extend Domain = 'Network'),\n    (_GetWatchlist('ComplianceReports_Vulnerabilities') | extend Domain = 'Vulnerabilities'),\n    (_GetWatchlist('ComplianceReports_DataProtection') | extend Domain = 'Data Protection')\n| where TimeGenerated {TimeRange}\n| where Framework has_any ({Framework}) or '*' in ({Framework})\n| summarize Count = count() by Severity\n| order by case(Severity == 'Critical', 1, Severity == 'High', 2, Severity == 'Medium', 3, 4)",
+        "size": 3,
+        "title": "Findings by Severity",
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "visualization": "piechart"
+      },
+      "customWidth": "50",
+      "name": "severity-pie-chart"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "union\n    (_GetWatchlist('ComplianceReports_Identity') | extend Domain = 'Identity'),\n    (_GetWatchlist('ComplianceReports_Threats') | extend Domain = 'Threats'),\n    (_GetWatchlist('ComplianceReports_Audit') | extend Domain = 'Audit'),\n    (_GetWatchlist('ComplianceReports_Network') | extend Domain = 'Network'),\n    (_GetWatchlist('ComplianceReports_Vulnerabilities') | extend Domain = 'Vulnerabilities'),\n    (_GetWatchlist('ComplianceReports_DataProtection') | extend Domain = 'Data Protection')\n| where TimeGenerated {TimeRange}\n| where Framework has_any ({Framework}) or '*' in ({Framework})\n| summarize Count = count() by Domain\n| order by Count desc",
+        "size": 3,
+        "title": "Findings by Security Domain",
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "visualization": "barchart"
+      },
+      "name": "domain-bar-chart"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "union\n    (_GetWatchlist('ComplianceReports_Identity') | extend Domain = 'Identity'),\n    (_GetWatchlist('ComplianceReports_Threats') | extend Domain = 'Threats'),\n    (_GetWatchlist('ComplianceReports_Audit') | extend Domain = 'Audit')\n| where TimeGenerated {TimeRange}\n| where Framework has_any ({Framework}) or '*' in ({Framework})\n| extend Framework = tostring(split(Framework, '|')[0])\n| summarize\n    TotalControls = dcount(ControlID),\n    CriticalFindings = countif(Severity == 'Critical'),\n    HighFindings = countif(Severity == 'High'),\n    TotalFindings = count()\n    by Framework\n| extend ComplianceScore = round(100 - ((todouble(CriticalFindings) * 10 + todouble(HighFindings) * 5) / todouble(TotalFindings)), 2)\n| project Framework, TotalControls, TotalFindings, CriticalFindings, HighFindings, ComplianceScore\n| order by ComplianceScore asc",
+        "size": 0,
+        "title": "Compliance Score by Framework",
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "visualization": "table",
+        "gridSettings": {
+          "formatters": [
+            {
+              "columnMatch": "ComplianceScore",
+              "formatter": 8,
+              "formatOptions": {
+                "palette": "greenRed"
+              }
+            }
+          ]
+        }
+      },
+      "name": "framework-compliance-table"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "## Threat Intelligence Dashboard\n---\n*Enriched by Security Copilot Threat Intelligence Briefing Agent*"
+      },
+      "name": "threat-intel-header"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "_GetWatchlist('ComplianceReports_Threats')\n| where TimeGenerated {TimeRange}\n| where Framework has_any ({Framework}) or '*' in ({Framework})\n| where Severity in ({Severity}) or '*' in ({Severity})\n| summarize\n    TotalAlerts = count(),\n    CriticalAlerts = countif(Severity == 'Critical'),\n    PhishingAlerts = countif(FindingType == 'Phishing Attempt'),\n    MalwareDetections = countif(FindingType == 'Malware Detection'),\n    DataExfiltration = countif(FindingType == 'Data Exfiltration'),\n    OpenIncidents = countif(FindingType == 'Open Incident')",
+        "size": 4,
+        "title": "Threat Metrics Summary",
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "visualization": "tiles",
+        "tileSettings": {
+          "showBorder": true
+        }
+      },
+      "name": "threat-metrics-tiles"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "_GetWatchlist('ComplianceReports_Threats')\n| where TimeGenerated {TimeRange}\n| where isnotempty(Tactics)\n| extend TacticList = split(Tactics, ',')\n| mv-expand Tactic = TacticList\n| summarize Count = count() by tostring(Tactic)\n| order by Count desc\n| take 10",
+        "size": 0,
+        "title": "Top 10 MITRE ATT&CK Tactics Observed",
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "visualization": "barchart"
+      },
+      "customWidth": "50",
+      "name": "mitre-tactics-chart"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "_GetWatchlist('ComplianceReports_Threats')\n| where TimeGenerated {TimeRange}\n| summarize Count = count() by FindingType\n| order by Count desc",
+        "size": 0,
+        "title": "Threat Finding Types Distribution",
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "visualization": "piechart"
+      },
+      "customWidth": "50",
+      "name": "finding-types-pie"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "_GetWatchlist('ComplianceReports_Threats')\n| where TimeGenerated {TimeRange}\n| where Severity in ('Critical', 'High')\n| project TimeGenerated, AlertName, AlertSeverity, CompromisedEntity, Tactics, RemediationRequired, Status\n| order by TimeGenerated desc\n| take 50",
+        "size": 0,
+        "title": "Recent Critical and High Severity Threats",
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "visualization": "table",
+        "gridSettings": {
+          "formatters": [
+            {
+              "columnMatch": "AlertSeverity",
+              "formatter": 18,
+              "formatOptions": {
+                "thresholdsOptions": "colors",
+                "thresholdsGrid": [
+                  {
+                    "operator": "==",
+                    "thresholdValue": "Critical",
+                    "representation": "redBright"
+                  },
+                  {
+                    "operator": "==",
+                    "thresholdValue": "High",
+                    "representation": "orange"
+                  },
+                  {
+                    "operator": "Default",
+                    "thresholdValue": null,
+                    "representation": "blue"
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      "name": "critical-threats-table"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "## Identity & Access Management\n---"
+      },
+      "name": "identity-header"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "_GetWatchlist('ComplianceReports_Identity')\n| where TimeGenerated {TimeRange}\n| summarize\n    TotalFindings = count(),\n    FailedAuthAttempts = countif(FindingType == 'Failed Authentication'),\n    InactiveAccounts = countif(FindingType == 'Inactive Account'),\n    MFANonCompliant = countif(FindingType == 'MFA Non-Compliance'),\n    PrivilegedChanges = countif(FindingType == 'Privileged Role Change')",
+        "size": 4,
+        "title": "Identity Metrics Summary",
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "visualization": "tiles",
+        "tileSettings": {
+          "showBorder": true
+        }
+      },
+      "name": "identity-metrics-tiles"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "_GetWatchlist('ComplianceReports_Identity')\n| where TimeGenerated {TimeRange}\n| where FindingType == 'Failed Authentication'\n| project TimeGenerated, UserPrincipalName, UserDisplayName, Severity, FindingDetails, RemediationRequired\n| order by TimeGenerated desc\n| take 25",
+        "size": 0,
+        "title": "Failed Authentication Attempts",
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "visualization": "table"
+      },
+      "customWidth": "50",
+      "name": "failed-auth-table"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "_GetWatchlist('ComplianceReports_Identity')\n| where TimeGenerated {TimeRange}\n| where FindingType == 'MFA Non-Compliance'\n| project UserPrincipalName, UserDisplayName, FindingDetails, RemediationRequired, Status\n| order by UserPrincipalName asc",
+        "size": 0,
+        "title": "MFA Non-Compliant Users",
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "visualization": "table"
+      },
+      "customWidth": "50",
+      "name": "mfa-noncompliant-table"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "## Audit & Configuration Management\n---"
+      },
+      "name": "audit-header"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "_GetWatchlist('ComplianceReports_Audit')\n| where TimeGenerated {TimeRange}\n| summarize Count = count() by FindingType\n| order by Count desc",
+        "size": 0,
+        "title": "Audit Finding Types",
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "visualization": "barchart"
+      },
+      "customWidth": "50",
+      "name": "audit-types-chart"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "_GetWatchlist('ComplianceReports_Audit')\n| where TimeGenerated {TimeRange}\n| where Severity in ('Critical', 'High')\n| summarize Count = count() by InitiatedBy\n| order by Count desc\n| take 10",
+        "size": 0,
+        "title": "Top 10 Users with Critical/High Audit Findings",
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "visualization": "table"
+      },
+      "customWidth": "50",
+      "name": "audit-users-table"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "_GetWatchlist('ComplianceReports_Audit')\n| where TimeGenerated {TimeRange}\n| where FindingType in ('Configuration Change', 'Resource Deletion')\n| project TimeGenerated, FindingType, Operation, InitiatedBy, ResourceAffected, Severity, RemediationRequired\n| order by TimeGenerated desc\n| take 50",
+        "size": 0,
+        "title": "Recent Critical Configuration Changes",
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "visualization": "table"
+      },
+      "name": "config-changes-table"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "## Control Status Matrix\n---\n*Compliance control coverage across all frameworks*"
+      },
+      "name": "control-matrix-header"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "union\n    (_GetWatchlist('ComplianceReports_Identity') | extend Domain = 'Identity'),\n    (_GetWatchlist('ComplianceReports_Threats') | extend Domain = 'Threats'),\n    (_GetWatchlist('ComplianceReports_Audit') | extend Domain = 'Audit'),\n    (_GetWatchlist('ComplianceReports_Network') | extend Domain = 'Network'),\n    (_GetWatchlist('ComplianceReports_Vulnerabilities') | extend Domain = 'Vulnerabilities'),\n    (_GetWatchlist('ComplianceReports_DataProtection') | extend Domain = 'Data Protection')\n| where TimeGenerated {TimeRange}\n| extend ControlIDList = split(ControlID, '|')\n| mv-expand ControlID = ControlIDList\n| summarize\n    TotalFindings = count(),\n    CriticalFindings = countif(Severity == 'Critical'),\n    HighFindings = countif(Severity == 'High'),\n    LastAssessed = max(TimeGenerated),\n    Domains = make_set(Domain)\n    by tostring(ControlID)\n| extend\n    Status = case(\n        CriticalFindings > 0, '❌ Failed',\n        HighFindings > 0, '⚠️ Partial',\n        '✅ Pass'\n    ),\n    RiskScore = (CriticalFindings * 10) + (HighFindings * 5)\n| project ControlID, Status, TotalFindings, CriticalFindings, HighFindings, RiskScore, LastAssessed, Domains\n| order by RiskScore desc, ControlID asc",
+        "size": 0,
+        "title": "Control Assessment Status",
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "visualization": "table",
+        "gridSettings": {
+          "formatters": [
+            {
+              "columnMatch": "Status",
+              "formatter": 18,
+              "formatOptions": {
+                "thresholdsOptions": "icons",
+                "thresholdsGrid": [
+                  {
+                    "operator": "contains",
+                    "thresholdValue": "Failed",
+                    "representation": "failed"
+                  },
+                  {
+                    "operator": "contains",
+                    "thresholdValue": "Partial",
+                    "representation": "warning"
+                  },
+                  {
+                    "operator": "contains",
+                    "thresholdValue": "Pass",
+                    "representation": "success"
+                  }
+                ]
+              }
+            },
+            {
+              "columnMatch": "RiskScore",
+              "formatter": 8,
+              "formatOptions": {
+                "palette": "greenRed"
+              }
+            }
+          ]
+        }
+      },
+      "name": "control-status-table"
+    },
+    {
+      "type": 1,
+      "content": {
+        "json": "## Remediation Tracker\n---"
+      },
+      "name": "remediation-header"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "union\n    (_GetWatchlist('ComplianceReports_Identity') | extend Domain = 'Identity'),\n    (_GetWatchlist('ComplianceReports_Threats') | extend Domain = 'Threats'),\n    (_GetWatchlist('ComplianceReports_Audit') | extend Domain = 'Audit'),\n    (_GetWatchlist('ComplianceReports_Network') | extend Domain = 'Network'),\n    (_GetWatchlist('ComplianceReports_Vulnerabilities') | extend Domain = 'Vulnerabilities')\n| where TimeGenerated {TimeRange}\n| where RemediationRequired == 'Yes'\n| summarize Count = count() by Severity, Domain\n| order by Severity, Count desc",
+        "size": 0,
+        "title": "Remediation Required by Domain and Severity",
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "visualization": "barchart"
+      },
+      "name": "remediation-chart"
+    },
+    {
+      "type": 3,
+      "content": {
+        "version": "KqlItem/1.0",
+        "query": "union\n    (_GetWatchlist('ComplianceReports_Identity') | extend Domain = 'Identity', Entity = UserPrincipalName),\n    (_GetWatchlist('ComplianceReports_Threats') | extend Domain = 'Threats', Entity = CompromisedEntity),\n    (_GetWatchlist('ComplianceReports_Audit') | extend Domain = 'Audit', Entity = ResourceAffected)\n| where TimeGenerated {TimeRange}\n| where RemediationRequired == 'Yes'\n| extend AgeDays = datetime_diff('day', now(), TimeGenerated)\n| project TimeGenerated, Domain, FindingType, Severity, ControlID, Entity, AgeDays, Status\n| order by Severity, AgeDays desc",
+        "size": 0,
+        "title": "Open Remediation Items (Aging Analysis)",
+        "queryType": 0,
+        "resourceType": "microsoft.operationalinsights/workspaces",
+        "visualization": "table",
+        "gridSettings": {
+          "formatters": [
+            {
+              "columnMatch": "AgeDays",
+              "formatter": 8,
+              "formatOptions": {
+                "palette": "greenRed"
+              }
+            }
+          ]
+        }
+      },
+      "name": "remediation-aging-table"
+    }
+  ],
+  "fromTemplateId": "sentinel-ComplianceSecOpsWorkbook",
+  "$schema": "https://github.com/Microsoft/Application-Insights-Workbooks/blob/master/schema/workbook.json"
+}

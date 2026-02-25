@@ -1,0 +1,1008 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OSCAR — Security Copilot Compliance Automation Agent</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<style>
+  :root {
+    --bg: #060810;
+    --surface: #0c1018;
+    --surface2: #111820;
+    --surface3: #182030;
+    --border: rgba(56,189,248,0.10);
+    --border-bright: rgba(56,189,248,0.22);
+    --text: #ddf0ff;
+    --text-dim: #5e7a99;
+    --accent: #38bdf8;
+    --accent-dim: rgba(56,189,248,0.10);
+    --green: #4ade80;
+    --green-dim: rgba(74,222,128,0.10);
+    --orange: #fb923c;
+    --orange-dim: rgba(251,146,60,0.10);
+    --purple: #c084fc;
+    --purple-dim: rgba(192,132,252,0.10);
+    --red: #f87171;
+    --red-dim: rgba(248,113,113,0.10);
+    --yellow: #fbbf24;
+    --yellow-dim: rgba(251,191,36,0.10);
+    --teal: #2dd4bf;
+    --teal-dim: rgba(45,212,191,0.10);
+    --font-body: 'Syne', system-ui, sans-serif;
+    --font-mono: 'JetBrains Mono', 'SF Mono', Consolas, monospace;
+  }
+
+  @media (prefers-color-scheme: light) {
+    :root {
+      --bg: #f0f8ff;
+      --surface: #ffffff;
+      --surface2: #e8f4fe;
+      --surface3: #daedfb;
+      --border: rgba(3,105,161,0.12);
+      --border-bright: rgba(3,105,161,0.25);
+      --text: #092844;
+      --text-dim: #4a7099;
+      --accent: #0284c7;
+      --accent-dim: rgba(2,132,199,0.10);
+      --green: #15803d;
+      --green-dim: rgba(21,128,61,0.10);
+      --orange: #c2410c;
+      --orange-dim: rgba(194,65,12,0.10);
+      --purple: #7c3aed;
+      --purple-dim: rgba(124,58,237,0.10);
+      --red: #dc2626;
+      --red-dim: rgba(220,38,38,0.10);
+      --yellow: #b45309;
+      --yellow-dim: rgba(180,83,9,0.10);
+      --teal: #0f766e;
+      --teal-dim: rgba(15,118,110,0.10);
+    }
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    background-image:
+      radial-gradient(ellipse at 50% 0%, rgba(56,189,248,0.07) 0%, transparent 55%),
+      radial-gradient(ellipse at 100% 60%, rgba(74,222,128,0.05) 0%, transparent 40%),
+      radial-gradient(circle, var(--border) 1px, transparent 1px);
+    background-size: auto, auto, 28px 28px;
+    color: var(--text);
+    font-family: var(--font-body);
+    padding: 52px 48px;
+    min-height: 100vh;
+    overflow-wrap: break-word;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeScale {
+    from { opacity: 0; transform: scale(0.92); }
+    to { opacity: 1; transform: scale(1); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+  }
+
+  .diagram { max-width: 1060px; margin: 0 auto; display: grid; gap: 22px; }
+
+  /* ---- HERO HEADER ---- */
+  .hero {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    gap: 28px;
+    align-items: center;
+    background: var(--surface);
+    border: 1px solid var(--border-bright);
+    border-radius: 16px;
+    padding: 36px 40px;
+    box-shadow: 0 0 60px rgba(56,189,248,0.05);
+    animation: fadeUp 0.5s ease-out both;
+  }
+
+  .hero-mascot {
+    flex-shrink: 0;
+    width: 140px;
+  }
+
+  .hero-mascot img {
+    width: 140px;
+    height: 140px;
+    object-fit: contain;
+    border-radius: 14px;
+    border: 1px solid var(--border-bright);
+    background: var(--surface2);
+    display: block;
+    box-shadow: 0 0 30px rgba(56,189,248,0.12);
+  }
+
+  .hero-badge {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--accent);
+    background: var(--accent-dim);
+    border: 1px solid var(--border-bright);
+    padding: 4px 12px;
+    border-radius: 20px;
+    display: inline-block;
+    margin-bottom: 14px;
+  }
+
+  h1 {
+    font-size: 42px;
+    font-weight: 800;
+    letter-spacing: -1.5px;
+    line-height: 1.05;
+    margin-bottom: 8px;
+  }
+
+  h1 span { color: var(--accent); }
+
+  .hero-tagline {
+    font-size: 14px;
+    color: var(--text-dim);
+    line-height: 1.6;
+    max-width: 520px;
+    margin-bottom: 16px;
+  }
+
+  .hero-full-name {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text-dim);
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    padding: 8px 14px;
+    border-radius: 7px;
+    display: inline-block;
+  }
+
+  .hero-kpis {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .hero-kpi {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 18px;
+    text-align: center;
+    min-width: 130px;
+    animation: fadeScale 0.4s ease-out both;
+    animation-delay: calc(var(--i, 0) * 0.1s);
+  }
+
+  .hero-kpi .kv {
+    font-size: 30px;
+    font-weight: 800;
+    letter-spacing: -1px;
+    color: var(--accent);
+    line-height: 1;
+  }
+
+  .hero-kpi .kl {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--text-dim);
+    margin-top: 4px;
+  }
+
+  /* ---- SECTIONS ---- */
+  .section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 24px 28px;
+    animation: fadeUp 0.4s ease-out both;
+    animation-delay: calc(var(--i, 0) * 0.06s);
+    min-width: 0;
+  }
+
+  .section-label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .section--accent .section-label { color: var(--accent); }
+  .section--accent .dot { background: var(--accent); }
+  .section--green .section-label { color: var(--green); }
+  .section--green .dot { background: var(--green); }
+  .section--orange .section-label { color: var(--orange); }
+  .section--orange .dot { background: var(--orange); }
+  .section--purple .section-label { color: var(--purple); }
+  .section--purple .dot { background: var(--purple); }
+  .section--yellow .section-label { color: var(--yellow); }
+  .section--yellow .dot { background: var(--yellow); }
+  .section--teal .section-label { color: var(--teal); }
+  .section--teal .dot { background: var(--teal); }
+  .section--red .section-label { color: var(--red); }
+  .section--red .dot { background: var(--red); }
+
+  /* ---- MERMAID WRAP ---- */
+  .mermaid-wrap {
+    position: relative;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 28px 20px;
+    overflow: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+
+  .mermaid-wrap .mermaid {
+    transition: transform 0.2s ease;
+    transform-origin: top center;
+  }
+
+  .zoom-controls {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    display: flex;
+    gap: 2px;
+    z-index: 10;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 2px;
+  }
+
+  .zoom-controls button {
+    width: 28px;
+    height: 28px;
+    border: none;
+    background: transparent;
+    color: var(--text-dim);
+    font-family: var(--font-mono);
+    font-size: 14px;
+    cursor: pointer;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s, color 0.15s;
+  }
+
+  .zoom-controls button:hover { background: var(--border); color: var(--text); }
+  .mermaid-wrap.is-zoomed { cursor: grab; }
+  .mermaid-wrap.is-panning { cursor: grabbing; user-select: none; }
+
+  /* ---- TWO/THREE COLS ---- */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+
+  .inner-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    padding: 14px 16px;
+    min-width: 0;
+    overflow-wrap: break-word;
+    transition: border-color 0.2s;
+  }
+
+  .inner-card:hover { border-color: var(--border-bright); }
+
+  .ic-title {
+    font-weight: 700;
+    font-size: 13px;
+    margin-bottom: 6px;
+  }
+
+  .ic-desc {
+    font-size: 12px;
+    color: var(--text-dim);
+    line-height: 1.55;
+  }
+
+  /* ---- SKILLS TABLE ---- */
+  .table-wrap {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  .table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    line-height: 1.5;
+  }
+
+  .data-table thead { position: sticky; top: 0; z-index: 2; }
+
+  .data-table th {
+    background: var(--surface3);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-dim);
+    text-align: left;
+    padding: 12px 16px;
+    border-bottom: 2px solid var(--border-bright);
+    white-space: nowrap;
+  }
+
+  .data-table td {
+    padding: 11px 16px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+    color: var(--text);
+  }
+
+  .data-table tbody tr:nth-child(even) { background: var(--accent-dim); }
+  .data-table tbody tr { transition: background 0.15s; }
+  .data-table tbody tr:hover { background: var(--border); }
+  .data-table tbody tr:last-child td { border-bottom: none; }
+
+  .data-table code {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    background: var(--accent-dim);
+    color: var(--accent);
+    padding: 1px 6px;
+    border-radius: 4px;
+  }
+
+  .status {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 4px;
+    white-space: nowrap;
+  }
+
+  .status--green { background: var(--green-dim); color: var(--green); }
+  .status--orange { background: var(--orange-dim); color: var(--orange); }
+  .status--purple { background: var(--purple-dim); color: var(--purple); }
+  .status--accent { background: var(--accent-dim); color: var(--accent); }
+
+  /* ---- PIPELINE ---- */
+  .pipeline {
+    display: flex;
+    gap: 0;
+    align-items: stretch;
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+
+  .ps {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    padding: 14px 18px;
+    min-width: 150px;
+    flex-shrink: 0;
+    text-align: center;
+  }
+
+  .ps-num { font-family: var(--font-mono); font-size: 10px; font-weight: 600; margin-bottom: 5px; }
+  .ps-name { font-size: 13px; font-weight: 700; margin-bottom: 3px; }
+  .ps-detail { font-size: 11px; color: var(--text-dim); line-height: 1.4; }
+
+  .ps-a { border-color: var(--accent-dim); }  .ps-a .ps-num { color: var(--accent); }
+  .ps-b { border-color: var(--green-dim); }   .ps-b .ps-num { color: var(--green); }
+  .ps-c { border-color: var(--orange-dim); }  .ps-c .ps-num { color: var(--orange); }
+  .ps-d { border-color: var(--purple-dim); }  .ps-d .ps-num { color: var(--purple); }
+  .ps-e { border-color: var(--teal-dim); }    .ps-e .ps-num { color: var(--teal); }
+
+  .pa {
+    display: flex;
+    align-items: center;
+    padding: 0 6px;
+    color: var(--border-bright);
+    font-size: 20px;
+    flex-shrink: 0;
+  }
+
+  /* ---- FRAMEWORK BADGES ---- */
+  .framework-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 12px;
+  }
+
+  .fw-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 18px;
+    min-width: 0;
+    overflow-wrap: break-word;
+  }
+
+  .fw-name { font-weight: 700; font-size: 13px; margin-bottom: 4px; }
+  .fw-desc { font-size: 11px; color: var(--text-dim); line-height: 1.5; }
+  .fw-badge {
+    display: inline-block;
+    font-family: var(--font-mono);
+    font-size: 9px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 4px;
+    margin-bottom: 8px;
+  }
+
+  /* ---- CALLOUT ---- */
+  .callout {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 9px 9px 0;
+    padding: 14px 18px;
+    font-size: 12px;
+    line-height: 1.6;
+    color: var(--text-dim);
+    margin-bottom: 16px;
+  }
+
+  .callout strong { color: var(--text); }
+
+  code {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    background: var(--accent-dim);
+    color: var(--accent);
+    padding: 1px 6px;
+    border-radius: 4px;
+  }
+
+  .node-list { list-style: none; font-size: 12px; line-height: 1.9; }
+  .node-list li { padding-left: 16px; position: relative; }
+  .node-list li::before { content: '›'; color: var(--text-dim); font-weight: 700; position: absolute; left: 0; }
+
+  .flow-arrow {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-dim);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    padding: 2px 0;
+    animation: fadeUp 0.4s ease-out both;
+    animation-delay: calc(var(--i, 0) * 0.06s);
+  }
+
+  .flow-arrow svg {
+    width: 18px; height: 18px; fill: none;
+    stroke: var(--border-bright); stroke-width: 2;
+    stroke-linecap: round; stroke-linejoin: round;
+  }
+
+  @media (max-width: 768px) {
+    body { padding: 20px; }
+    h1 { font-size: 30px; }
+    .hero { grid-template-columns: 1fr; }
+    .hero-mascot { width: 90px; }
+    .hero-mascot img { width: 90px; height: 90px; }
+    .hero-kpis { flex-direction: row; flex-wrap: wrap; }
+    .two-col, .three-col { grid-template-columns: 1fr; }
+    .pipeline { flex-wrap: wrap; gap: 8px; }
+    .pa { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<div class="diagram">
+
+  <!-- HERO -->
+  <div class="hero" style="--i:0">
+    <div class="hero-mascot">
+      <img src="https://raw.githubusercontent.com/bobsyourmom/OSCAR/main/oscar%20blue%20glasses.png" alt="OSCAR mascot">
+    </div>
+    <div>
+      <div class="hero-badge">Custom Security Copilot Agent</div>
+      <h1><span>OSCAR</span></h1>
+      <p class="hero-tagline">A custom Microsoft Security Copilot agent that automates daily compliance reporting — executing 100+ KQL queries, storing results in Azure Sentinel, and building a continuous audit trail across NIST, CIS, and beyond.</p>
+      <div class="hero-full-name">Operations Security &amp; Compliance Automated Reporter</div>
+    </div>
+    <div class="hero-kpis">
+      <div class="hero-kpi" style="--i:1">
+        <div class="kv">100+</div>
+        <div class="kl">KQL Queries</div>
+      </div>
+      <div class="hero-kpi" style="--i:2">
+        <div class="kv">30</div>
+        <div class="kl">SCUs / Month</div>
+      </div>
+      <div class="hero-kpi" style="--i:3">
+        <div class="kv">7.5%</div>
+        <div class="kl">Free Tier Usage</div>
+      </div>
+      <div class="hero-kpi" style="--i:4">
+        <div class="kv">$0.30</div>
+        <div class="kl">Logic App / Month</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ARCHITECTURE PIPELINE -->
+  <div class="section section--accent" style="--i:5">
+    <div class="section-label"><span class="dot"></span> How OSCAR Works — End-to-End Flow</div>
+    <div class="pipeline">
+      <div class="ps ps-a">
+        <div class="ps-num">TRIGGER</div>
+        <div class="ps-name">Azure Logic App</div>
+        <div class="ps-detail">Scheduled daily at 8:00 AM UTC — calls Security Copilot API</div>
+      </div>
+      <div class="pa">→</div>
+      <div class="ps ps-b">
+        <div class="ps-num">EXECUTION</div>
+        <div class="ps-name">Security Copilot Agent</div>
+        <div class="ps-detail">Runs KQL compliance skill (~1 SCU per execution)</div>
+      </div>
+      <div class="pa">→</div>
+      <div class="ps ps-c">
+        <div class="ps-num">PROCESSING</div>
+        <div class="ps-name">Logic App Parse</div>
+        <div class="ps-detail">Strips markdown, parses JSON response from Copilot</div>
+      </div>
+      <div class="pa">→</div>
+      <div class="ps ps-d">
+        <div class="ps-num">INGESTION</div>
+        <div class="ps-name">Log Analytics</div>
+        <div class="ps-detail">HTTP Data Collector API writes to <code>ComplianceReports_CL</code></div>
+      </div>
+      <div class="pa">→</div>
+      <div class="ps ps-e">
+        <div class="ps-num">REPORTING</div>
+        <div class="ps-name">Sentinel Workbooks</div>
+        <div class="ps-detail">90-day retained audit trail — queryable via KQL anytime</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MERMAID ARCHITECTURE DIAGRAM -->
+  <div class="section section--accent" style="--i:6">
+    <div class="section-label"><span class="dot"></span> System Architecture</div>
+    <div class="mermaid-wrap">
+      <div class="zoom-controls">
+        <button onclick="zoomDiagram(this, 1.25)" title="Zoom in">+</button>
+        <button onclick="zoomDiagram(this, 0.8)" title="Zoom out">&minus;</button>
+        <button onclick="resetZoom(this)" title="Reset">&#8634;</button>
+      </div>
+      <pre class="mermaid">
+%%{init: {'theme': 'base', 'themeVariables': {'primaryColor': '#182030', 'primaryTextColor': '#ddf0ff', 'primaryBorderColor': '#38bdf8', 'lineColor': '#38bdf8', 'secondaryColor': '#111820', 'tertiaryColor': '#0c1018', 'edgeLabelBackground': '#182030', 'clusterBkg': '#111820', 'titleColor': '#ddf0ff', 'fontFamily': 'JetBrains Mono'}}}%%
+flowchart TD
+    LA["Azure Logic App\nRecurrence: Daily 8AM UTC"]
+    SCA["Security Copilot Agent\nOSCAR Manifest"]
+    KQL["KQL Compliance Skills\n13 Built-in Reports"]
+    SENT["Azure Sentinel\nLog Analytics Workspace"]
+    TABLE["ComplianceReports_CL\nCustom Log Table"]
+    WB["Sentinel Workbooks\nVisualization Layer"]
+    ALERT["Alert Rules\nThreshold Triggers"]
+    TEST["Test Logic App\nValidation Only"]
+
+    LA -->|"invoke skill"| SCA
+    SCA -->|"execute KQL"| KQL
+    KQL -->|"return JSON"| SCA
+    SCA -->|"structured findings"| LA
+    LA -->|"HTTP Data Collector API"| SENT
+    SENT --> TABLE
+    TABLE --> WB
+    TABLE --> ALERT
+    TEST -.->|"static data"| SENT
+
+    style LA fill:#182030,stroke:#38bdf8,color:#ddf0ff
+    style SCA fill:#182030,stroke:#4ade80,color:#ddf0ff
+    style KQL fill:#182030,stroke:#fbbf24,color:#ddf0ff
+    style SENT fill:#182030,stroke:#c084fc,color:#ddf0ff
+    style TABLE fill:#182030,stroke:#c084fc,color:#ddf0ff
+    style WB fill:#182030,stroke:#2dd4bf,color:#ddf0ff
+    style ALERT fill:#182030,stroke:#f87171,color:#ddf0ff
+    style TEST fill:#111820,stroke:#5e7a99,color:#5e7a99,stroke-dasharray:5 5
+      </pre>
+    </div>
+  </div>
+
+  <!-- COMPONENTS DEEP DIVE -->
+  <div class="section section--green" style="--i:7">
+    <div class="section-label"><span class="dot"></span> Component Details</div>
+    <div class="three-col">
+      <div class="inner-card">
+        <div class="ic-title" style="color:var(--accent)">Security Copilot Agent</div>
+        <div class="ic-desc">
+          <ul class="node-list">
+            <li>Defined by <code>agent-manifest-rebuild.yaml</code></li>
+            <li>Contains 13 named KQL skills</li>
+            <li>Skills are case-sensitive when called</li>
+            <li>Uses union queries to guarantee results (even "No Findings")</li>
+            <li>OAuth 2.0 authentication to Copilot API</li>
+            <li>~1 SCU consumed per skill execution</li>
+          </ul>
+        </div>
+      </div>
+      <div class="inner-card">
+        <div class="ic-title" style="color:var(--green)">Azure Logic App</div>
+        <div class="ic-desc">
+          <ul class="node-list">
+            <li>ARM template deployment: <code>logicapp-copilot-failedauth.json</code></li>
+            <li>Recurrence trigger — daily at 8:00 AM UTC</li>
+            <li>Calls Security Copilot via REST API</li>
+            <li>Strips markdown formatting from Copilot response</li>
+            <li>Parses JSON output into structured fields</li>
+            <li>HTTP POST to Log Analytics Data Collector API</li>
+            <li>~$0.30/month at consumption pricing</li>
+          </ul>
+        </div>
+      </div>
+      <div class="inner-card">
+        <div class="ic-title" style="color:var(--purple)">Azure Sentinel / Log Analytics</div>
+        <div class="ic-desc">
+          <ul class="node-list">
+            <li>Data stored in <code>ComplianceReports_CL</code> custom table</li>
+            <li>HMAC authentication via Data Collector API</li>
+            <li>90-day retention for complete audit trail</li>
+            <li>Queryable via KQL for ad-hoc investigations</li>
+            <li>Foundation for Sentinel Workbook dashboards</li>
+            <li>Future: alerting on compliance threshold breaches</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SKILL REPORTS TABLE -->
+  <div class="section section--yellow" style="--i:8">
+    <div class="section-label"><span class="dot"></span> Built-In Compliance Skills (13 Reports)</div>
+    <div class="table-wrap">
+      <div class="table-scroll">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Skill Name</th>
+              <th>What It Detects</th>
+              <th>Framework Mapping</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>MitreAttackReport</code></td>
+              <td>MITRE ATT&amp;CK technique detections across Sentinel logs</td>
+              <td>NIST CSF DE.CM, CIS Control 8</td>
+              <td><span class="status status--green">Active</span></td>
+            </tr>
+            <tr>
+              <td><code>FailedAuthenticationReport</code></td>
+              <td>Failed login patterns, brute force, password spray, impossible travel</td>
+              <td>NIST 800-53 AC-7, CIS Control 5</td>
+              <td><span class="status status--green">Active</span></td>
+            </tr>
+            <tr>
+              <td><code>AdminActivityReport</code></td>
+              <td>Privileged account activity, admin role changes, PIM activations</td>
+              <td>NIST 800-53 AC-6, CIS Control 5</td>
+              <td><span class="status status--green">Active</span></td>
+            </tr>
+            <tr>
+              <td><code>HighSeverityAlertsReport</code></td>
+              <td>High-severity alert aggregation across Defender and Sentinel</td>
+              <td>NIST CSF RS.AN, CIS Control 8</td>
+              <td><span class="status status--green">Active</span></td>
+            </tr>
+            <tr>
+              <td><code>DataExfiltrationReport</code></td>
+              <td>Unusual data transfer, bulk download, external sharing events</td>
+              <td>NIST 800-53 SI-12, CIS Control 13</td>
+              <td><span class="status status--green">Active</span></td>
+            </tr>
+            <tr>
+              <td><code>PrivilegedAccountUsageReport</code></td>
+              <td>After-hours privileged account usage, unusual admin sign-ins</td>
+              <td>NIST 800-53 AC-2, CIS Control 5</td>
+              <td><span class="status status--green">Active</span></td>
+            </tr>
+            <tr>
+              <td><code>NetworkAnomalyReport</code></td>
+              <td>Unusual network traffic, connection to rare external IPs</td>
+              <td>NIST CSF DE.CM-1, CIS Control 12</td>
+              <td><span class="status status--green">Active</span></td>
+            </tr>
+            <tr>
+              <td><code>EndpointSecurityComplianceReport</code></td>
+              <td>Devices out of compliance, missing patches, Defender health</td>
+              <td>NIST 800-53 CM-6, CIS Control 4</td>
+              <td><span class="status status--green">Active</span></td>
+            </tr>
+            <tr>
+              <td><code>MFAStatusReport</code></td>
+              <td>Users missing MFA registration, MFA failures, conditional access gaps</td>
+              <td>NIST 800-53 IA-2, CIS Control 6</td>
+              <td><span class="status status--green">Active</span></td>
+            </tr>
+            <tr>
+              <td><code>VulnerabilityManagementReport</code></td>
+              <td>Critical CVEs, patch status, exposure score trends</td>
+              <td>NIST 800-53 RA-5, CIS Control 7</td>
+              <td><span class="status status--green">Active</span></td>
+            </tr>
+            <tr>
+              <td><code>BackupVerificationReport</code></td>
+              <td>Backup job status, last successful backup timestamps</td>
+              <td>NIST 800-53 CP-9, CIS Control 11</td>
+              <td><span class="status status--green">Active</span></td>
+            </tr>
+            <tr>
+              <td><code>FirewallRuleChangesReport</code></td>
+              <td>New or modified firewall rules, NSG changes in Azure</td>
+              <td>NIST 800-53 SC-7, CIS Control 12</td>
+              <td><span class="status status--green">Active</span></td>
+            </tr>
+            <tr>
+              <td><code>SuspiciousProcessExecutionReport</code></td>
+              <td>LOLBins, malware-like process trees, encoded command execution</td>
+              <td>NIST CSF DE.CM-5, CIS Control 8</td>
+              <td><span class="status status--green">Active</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- COMPLIANCE FRAMEWORKS -->
+  <div class="section section--purple" style="--i:9">
+    <div class="section-label"><span class="dot"></span> Compliance Frameworks</div>
+    <div class="framework-grid">
+      <div class="fw-card">
+        <span class="fw-badge" style="background:var(--accent-dim);color:var(--accent)">Current</span>
+        <div class="fw-name">NIST Cybersecurity Framework 2.0</div>
+        <div class="fw-desc">Maps reports to GOVERN, IDENTIFY, PROTECT, DETECT, RESPOND, and RECOVER functions</div>
+      </div>
+      <div class="fw-card">
+        <span class="fw-badge" style="background:var(--accent-dim);color:var(--accent)">Current</span>
+        <div class="fw-name">NIST SP 800-53 Rev 5</div>
+        <div class="fw-desc">Maps to control families: AC (Access Control), IA (Identification), SI (System Integrity), RA (Risk Assessment), SC (System Communications)</div>
+      </div>
+      <div class="fw-card">
+        <span class="fw-badge" style="background:var(--green-dim);color:var(--green)">Current</span>
+        <div class="fw-name">CIS Controls v8</div>
+        <div class="fw-desc">Maps to Controls 4–13 covering device, software, identity, email, audit log, and network monitoring domains</div>
+      </div>
+      <div class="fw-card">
+        <span class="fw-badge" style="background:var(--orange-dim);color:var(--orange)">Roadmap</span>
+        <div class="fw-name">HIPAA Security Rule</div>
+        <div class="fw-desc">Administrative, physical, and technical safeguard coverage for healthcare data protection</div>
+      </div>
+      <div class="fw-card">
+        <span class="fw-badge" style="background:var(--orange-dim);color:var(--orange)">Roadmap</span>
+        <div class="fw-name">PCI-DSS v4.0</div>
+        <div class="fw-desc">Cardholder data environment protection, access control, monitoring, and vulnerability management</div>
+      </div>
+      <div class="fw-card">
+        <span class="fw-badge" style="background:var(--orange-dim);color:var(--orange)">Roadmap</span>
+        <div class="fw-name">SOC 2 Type II</div>
+        <div class="fw-desc">Trust Service Criteria: Security, Availability, Processing Integrity, Confidentiality, Privacy</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DEPLOYMENT STEPS -->
+  <div class="section section--teal" style="--i:10">
+    <div class="section-label"><span class="dot"></span> Deployment — Quick Start (4 Steps)</div>
+    <div class="two-col">
+      <div>
+        <div class="three-col" style="grid-template-columns:1fr 1fr">
+          <div class="inner-card">
+            <div class="ic-title" style="color:var(--accent)">Step 1 — Agent Manifest</div>
+            <div class="ic-desc">Import <code>agent-manifest-rebuild.yaml</code> into Security Copilot Custom Agents. Verify 13 skills are loaded and case-sensitive skill names match the Logic App prompts.</div>
+          </div>
+          <div class="inner-card">
+            <div class="ic-title" style="color:var(--green)">Step 2 — Logic App Deploy</div>
+            <div class="ic-desc">Deploy <code>logicapp-copilot-failedauth.json</code> via Azure ARM template. Set daily recurrence schedule. Confirm Sentinel workspace ID and key are correct.</div>
+          </div>
+          <div class="inner-card">
+            <div class="ic-title" style="color:var(--orange)">Step 3 — Authorize APIs</div>
+            <div class="ic-desc">Authorize the Security Copilot API connection (OAuth 2.0) and the Log Analytics connection (RBAC) in the Azure Portal API connections blade.</div>
+          </div>
+          <div class="inner-card">
+            <div class="ic-title" style="color:var(--purple)">Step 4 — Validate</div>
+            <div class="ic-desc">Manually trigger the Logic App once. Check <code>ComplianceReports_CL</code> in Sentinel for data ingestion. Use the Test Logic App for validation without consuming SCUs.</div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="callout" style="margin-bottom:12px"><strong>Prerequisites:</strong> Azure subscription with Sentinel workspace, Security Copilot free tier (400 SCUs/month), Azure CLI, Contributor RBAC access</div>
+        <div class="inner-card">
+          <div class="ic-title">Cost Breakdown</div>
+          <div class="ic-desc">
+            <ul class="node-list">
+              <li>Security Copilot: ~30 SCUs/month (7.5% of free 400)</li>
+              <li>Logic App: ~$0.30/month (consumption pricing)</li>
+              <li>Log Analytics: minimal ingestion cost (~MB/day)</li>
+              <li>Total estimated cost: essentially free on free tier</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- EXAMPLE PROMPTS -->
+  <div class="section section--orange" style="--i:11">
+    <div class="section-label"><span class="dot"></span> Example Security Copilot Prompts for OSCAR</div>
+    <div class="callout">These prompts invoke OSCAR skills directly in the Security Copilot standalone portal. Skill names are <strong>case-sensitive</strong>.</div>
+    <div class="two-col">
+      <div>
+        <ul class="node-list">
+          <li>Run the <code>FailedAuthenticationReport</code> skill and summarize findings</li>
+          <li>Run <code>MitreAttackReport</code> — what ATT&amp;CK techniques were observed this week?</li>
+          <li>Run <code>PrivilegedAccountUsageReport</code> and flag after-hours activity</li>
+          <li>Run <code>MFAStatusReport</code> — who is missing MFA in our tenant?</li>
+          <li>Run <code>HighSeverityAlertsReport</code> and prioritize the top 5 findings</li>
+          <li>Run <code>DataExfiltrationReport</code> — any unusual data movement today?</li>
+          <li>Run <code>EndpointSecurityComplianceReport</code> and list non-compliant devices</li>
+        </ul>
+      </div>
+      <div>
+        <ul class="node-list">
+          <li>Run <code>VulnerabilityManagementReport</code> — what critical CVEs need patching?</li>
+          <li>Run <code>SuspiciousProcessExecutionReport</code> — any LOLBin activity?</li>
+          <li>Run <code>NetworkAnomalyReport</code> and flag connections to unusual geographies</li>
+          <li>Run <code>FirewallRuleChangesReport</code> — any unauthorized firewall changes?</li>
+          <li>Run <code>AdminActivityReport</code> — any unexpected admin role changes?</li>
+          <li>Run <code>BackupVerificationReport</code> — are all critical systems backed up?</li>
+          <li>Map all OSCAR findings from today to NIST CSF 2.0 controls and generate a compliance summary</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ROADMAP -->
+  <div class="section section--red" style="--i:12">
+    <div class="section-label"><span class="dot"></span> Roadmap &amp; Future Enhancements</div>
+    <div class="three-col">
+      <div class="inner-card">
+        <div class="ic-title" style="color:var(--accent)">Near-Term</div>
+        <div class="ic-desc">
+          <ul class="node-list">
+            <li>Sentinel Workbook dashboards for visual compliance reporting</li>
+            <li>Threshold-based alerting on compliance degradation</li>
+            <li>Parameterized Logic App for multiple skill execution in one run</li>
+          </ul>
+        </div>
+      </div>
+      <div class="inner-card">
+        <div class="ic-title" style="color:var(--orange)">Medium-Term</div>
+        <div class="ic-desc">
+          <ul class="node-list">
+            <li>HIPAA and PCI-DSS framework coverage</li>
+            <li>SOC 2 Trust Service Criteria mapping</li>
+            <li>Multi-framework consolidated reporting view</li>
+            <li>Weekly and monthly report cadence options</li>
+          </ul>
+        </div>
+      </div>
+      <div class="inner-card">
+        <div class="ic-title" style="color:var(--red)">Long-Term Vision</div>
+        <div class="ic-desc">
+          <ul class="node-list">
+            <li>Automated remediation triggers from non-compliant findings</li>
+            <li>PDF and Excel audit export for external auditors</li>
+            <li>ServiceNow / Jira ticketing integration</li>
+            <li>Evidence collection for formal compliance certifications</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  mermaid.initialize({
+    startOnLoad: true,
+    theme: 'base',
+    themeVariables: {
+      primaryColor: '#182030',
+      primaryTextColor: '#ddf0ff',
+      primaryBorderColor: '#38bdf8',
+      lineColor: '#38bdf8',
+      secondaryColor: '#111820',
+      tertiaryColor: '#0c1018',
+      edgeLabelBackground: '#182030',
+      fontFamily: 'JetBrains Mono, monospace'
+    }
+  });
+
+  function updateZoomState(wrap) {
+    var target = wrap.querySelector('.mermaid');
+    var zoom = parseFloat(target.dataset.zoom || '1');
+    wrap.classList.toggle('is-zoomed', zoom > 1);
+  }
+
+  function zoomDiagram(btn, factor) {
+    var wrap = btn.closest('.mermaid-wrap');
+    var target = wrap.querySelector('.mermaid');
+    var current = parseFloat(target.dataset.zoom || '1');
+    var next = Math.min(Math.max(current * factor, 0.3), 5);
+    target.dataset.zoom = next;
+    target.style.transform = 'scale(' + next + ')';
+    updateZoomState(wrap);
+  }
+
+  function resetZoom(btn) {
+    var wrap = btn.closest('.mermaid-wrap');
+    var target = wrap.querySelector('.mermaid');
+    target.dataset.zoom = '1';
+    target.style.transform = 'scale(1)';
+    updateZoomState(wrap);
+  }
+
+  document.querySelectorAll('.mermaid-wrap').forEach(function(wrap) {
+    wrap.addEventListener('wheel', function(e) {
+      if (!e.ctrlKey && !e.metaKey) return;
+      e.preventDefault();
+      var target = wrap.querySelector('.mermaid');
+      var current = parseFloat(target.dataset.zoom || '1');
+      var factor = e.deltaY < 0 ? 1.1 : 0.9;
+      var next = Math.min(Math.max(current * factor, 0.3), 5);
+      target.dataset.zoom = next;
+      target.style.transform = 'scale(' + next + ')';
+      updateZoomState(wrap);
+    }, { passive: false });
+
+    var startX, startY, scrollL, scrollT;
+    wrap.addEventListener('mousedown', function(e) {
+      if (e.target.closest('.zoom-controls')) return;
+      var target = wrap.querySelector('.mermaid');
+      if (parseFloat(target.dataset.zoom || '1') <= 1) return;
+      wrap.classList.add('is-panning');
+      startX = e.clientX; startY = e.clientY;
+      scrollL = wrap.scrollLeft; scrollT = wrap.scrollTop;
+    });
+    window.addEventListener('mousemove', function(e) {
+      if (!wrap.classList.contains('is-panning')) return;
+      wrap.scrollLeft = scrollL - (e.clientX - startX);
+      wrap.scrollTop = scrollT - (e.clientY - startY);
+    });
+    window.addEventListener('mouseup', function() {
+      wrap.classList.remove('is-panning');
+    });
+  });
+</script>
+
+</body>
+</html>
